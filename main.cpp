@@ -26,8 +26,17 @@
 
 #include "three_d_vector.h"
 #include "lodepng.h"
+#include "particle.h"
 
 #define PI 3.14159265  // Should be used from mathlib
+
+//CONSTANTS
+const long double WATER_MASS = 1.0;
+const long double WATER_VICOSITY_COEFFICIENT = 1.0;
+const long double WATER_BUOYANCY_STRENGTH = 1.0;
+const long double FOG_MASS = 1.0;
+const long double FOG_VICOSITY_COEFFICIENT = 1.0;
+const long double FOG_BUOYANCY_STRENGTH = 1.0;
 
 using namespace std;
 

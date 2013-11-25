@@ -1,4 +1,4 @@
-OBJS = main.o three_d_vector.o lodepng.o
+OBJS = main.o three_d_vector.o lodepng.o particle.o
 CC = g++
 INCLUDE = -I ./
 FLAGS = -O2
@@ -17,12 +17,14 @@ RM = /bin/rm -f
 all: main 
 main: $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -o main $(OBJS) $(LDFLAGS) 
-main.o: main.cpp three_d_vector.h lodepng.h
+main.o: main.cpp three_d_vector.h lodepng.h particle.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c main.cpp -o main.o
 three_d_vector.o: three_d_vector.cpp three_d_vector.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c three_d_vector.cpp -o three_d_vector.o
 lodepng.o: lodepng.h lodepng.cpp
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c lodepng.cpp -o lodepng.o
+particle.o: particle.h particle.cpp three_d_vector.h
+	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c particle.cpp -o particle.o
 clean: 
 	$(RM) *.o as1
  
