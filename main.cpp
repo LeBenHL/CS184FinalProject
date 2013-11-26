@@ -28,15 +28,15 @@
 #include "lodepng.h"
 #include "particle.h"
 
-#define PI 3.14159265  // Should be used from mathlib
-
 //CONSTANTS
-const long double WATER_MASS = 1.0;
-const long double WATER_VICOSITY_COEFFICIENT = 1.0;
-const long double WATER_BUOYANCY_STRENGTH = 1.0;
-const long double FOG_MASS = 1.0;
-const long double FOG_VICOSITY_COEFFICIENT = 1.0;
-const long double FOG_BUOYANCY_STRENGTH = 1.0;
+long double PI = atan(1)*4;
+long double E = 2.7182818284590452353;
+long double WATER_MASS = 1.0;
+long double WATER_VICOSITY_COEFFICIENT = 1.0;
+long double WATER_BUOYANCY_STRENGTH = 1.0;
+long double FOG_MASS = 1.0;
+long double FOG_VICOSITY_COEFFICIENT = 1.0;
+long double FOG_BUOYANCY_STRENGTH = 1.0;
 
 using namespace std;
 
@@ -279,14 +279,16 @@ void myDisplay() {
 
   //gluLookAt(center_x + 1000000, center_y, center_z - 2500000, center_x + 200000, center_y, center_z, 0, 1, 0);
 
-  gluLookAt(2200000, 0, min_z * 10, 1700000, 0, 0, 0, 1, 0);
-  glTranslatef(-center_x, -center_y, -center_z);
+  gluLookAt(220, 0, -150, 175, 0, 0, 0, 1, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   // Enable shading
   glShadeModel(GL_SMOOTH);
 
+  long double scale_factor = 1.0/10000.0;
+  glScalef(scale_factor, scale_factor, scale_factor);
+  glTranslatef(-center_x, -center_y, -center_z);
   // Start drawing
   for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = polygons.begin(); it != polygons.end(); ++it) {
     vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;

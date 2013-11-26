@@ -1,6 +1,7 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
+#include <cmath>
 #include "three_d_vector.h"
 
 class Particle {
@@ -16,6 +17,10 @@ class Particle {
 		~Particle();
 		static Particle* createWaterParticle(long double x, long double y, long double z, long double velocity=0);
 		static Particle* createFogParticle(long double x, long double y, long double z, long double velocity=0);
+
+
+		//H is the smoothing length in this case.
+		static long double kernel(long double r, long double h=sqrt(2));
 
 };
 
