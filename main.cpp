@@ -205,7 +205,7 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 void initScene(){
-  glClearColor(0.3f, 0.3f, 0.3f, 1.0f); // Clear to black, fully transparent
+  glClearColor(0.52941f, 0.80784f, 0.98039f, 1.0f); // Clear to black, fully transparent
 
   // Enable lighting and the light we have set up
   glEnable(GL_LIGHTING);
@@ -215,10 +215,10 @@ void initScene(){
   glEnable(GL_RESCALE_NORMAL);
 
   //Set lighting parameters
-  GLfloat light_position0[] = {0.0, 0.0, -1.0, 0};
+  GLfloat light_position0[] = {0.0, 1.0, -1.0, 0};
   GLfloat light_ambient0[] = {0, 0, 0, 1};
-  GLfloat light_diffuse0[] = {1.0, 1.0, 1.0, 1};
-  GLfloat light_specular0[] = {1.0, 1.0, 1.0, 1};
+  GLfloat light_diffuse0[] = {2.0, 2.0, 2.0, 1};
+  GLfloat light_specular0[] = {2.0, 2.0, 2.0, 1};
 
   glLightfv(GL_LIGHT0, GL_POSITION, light_position0);
   glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient0);
@@ -353,8 +353,8 @@ int main(int argc, char *argv[]) {
   glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 
   // Initalize theviewport size
-  viewport.w = 400;
-  viewport.h = 400;
+  viewport.w = 1920;
+  viewport.h = 1200;
 
   //The size and position of the window
   glutInitWindowSize(viewport.w, viewport.h);
