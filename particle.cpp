@@ -5,7 +5,7 @@
 using namespace std;
 
 Particle::Particle(long double x, long double y, long double z, long double mass, 
-		long double velocity, long double viscosity_coefficient, long double buoyancy_strength, long double gas_constant, long double rest_density) {
+		ThreeDVector* velocity, long double viscosity_coefficient, long double buoyancy_strength, long double gas_constant, long double rest_density) {
 	this->position = new ThreeDVector(x, y, z);
 	this->mass = mass;
 	this->velocity = velocity;
@@ -17,9 +17,10 @@ Particle::Particle(long double x, long double y, long double z, long double mass
 
 Particle::~Particle() {
 	delete this->position;
+	delete this->velocity;
 }
 
-long double Particle::density(vector<Particle*> particles) {
+void Particle::set_density(vector<Particle*> particles) {
 	long double running_sum = 0;
 	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
 		Particle* particle = *it;
@@ -27,34 +28,75 @@ long double Particle::density(vector<Particle*> particles) {
 		running_sum += particle->mass * Particle::poly6Kernel(this->position->distance(particle->position), 1);
 	}
 	//TODO Save density?
+	this->density = running_sum;
+}
+
+ThreeDVector* Particle::viscosityForce(vector<Particle*> particles) {
+	ThreeDVector* running_sum = new ThreeDVector();
+	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
+		Particle* particle = *it;
+		//TODO what is correct value of H?
+		ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
+		velocity_difference->scalar_multiply_bang(particle->mass / particle->density);
+		velocity_difference->scalar_multiply_bang(Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), 1));
+		running_sum->vector_add_bang(velocity_difference);
+		delete velocity_difference;
+	}
+	running_sum->scalar_multiply_bang(this->viscosity_coefficient);
 	return running_sum;
 }
 
-long double Particle::viscosityForce(vector<Particle*> particles) {
-	long double running_sum = 0;
+ThreeDVector* Particle::pressureForce(vector<Particle*> particles) {
+	ThreeDVector* running_sum = new ThreeDVector();
+	ThreeDVector* my_pressure = this->pressure();
 	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
 		Particle* particle = *it;
 		//TODO what is correct value of H?
-		running_sum += (particle->velocity - this->velocity) * (particle->mass / particle->density(particles)) * Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), 1);
+		ThreeDVector* particle_pressure = particle->pressure();
+		ThreeDVector* average_pressure = particle_pressure->vector_add(my_pressure);
+		average_pressure->scalar_multiply_bang(0.5);
+		average_pressure->scalar_multiply_bang(particle->mass / particle->density);
+		average_pressure->scalar_multiply_bang(Particle::spikyGradientKernel(this->position->distance(particle->position), 1));
+		running_sum->vector_add_bang(average_pressure);
+		delete particle_pressure;
+		delete average_pressure;
 	}
-	return running_sum * this->viscosity_coefficient;
+	delete my_pressure;
+
+	running_sum->scalar_multiply_bang(-1);
+	return running_sum;
 }
 
-long double Particle::pressureForce(vector<Particle*> particles) {
-	long double running_sum = 0;
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
-		Particle* particle = *it;
-		//TODO what is correct value of H?
-		running_sum += ((particle->pressure(particles) + this->pressure(particles)) / 2) * (particle->mass / particle->density(particles)) * Particle::spikyGradientKernel(this->position->distance(particle->position), 1);
-	}
-	return -running_sum;
+ThreeDVector* Particle::externalForce() {
+	ThreeDVector* externalForce = new ThreeDVector();
+	ThreeDVector* gravity = this->gravity();
+	ThreeDVector* wind = this->wind();
+
+	externalForce->vector_add_bang(gravity);
+	externalForce->vector_add_bang(wind);
+
+	delete gravity;
+	delete wind;
+
+	return externalForce;
 }
 
-long double Particle::pressure(vector<Particle*> particles) {
-	return this->gas_constant * (pow(this->density(particles) / this->rest_density, 7) - 1);
+ThreeDVector* Particle::gravity() {
+	extern ThreeDVector* CONSTANT_OF_GRAVITY;
+	return CONSTANT_OF_GRAVITY->scalar_multiply(this->density);
 }
 
-Particle* Particle::createWaterParticle(long double x, long double y, long double z, long double velocity) {
+ThreeDVector* Particle::wind() {
+	return new ThreeDVector(5, 0, 0);
+}
+
+ThreeDVector* Particle::pressure() {
+	//Assume Pressure is same in all directions?
+	long double pressure = this->gas_constant * (pow(this->density / this->rest_density, 7) - 1);
+	return new ThreeDVector(pressure, pressure, pressure);
+}
+
+Particle* Particle::createWaterParticle(long double x, long double y, long double z, ThreeDVector* velocity) {
 	extern long double WATER_MASS;
 	extern long double WATER_VICOSITY_COEFFICIENT;
 	extern long double WATER_BUOYANCY_STRENGTH;
@@ -63,7 +105,7 @@ Particle* Particle::createWaterParticle(long double x, long double y, long doubl
 	return new Particle(x, y, z, WATER_MASS, velocity, WATER_VICOSITY_COEFFICIENT, WATER_BUOYANCY_STRENGTH, WATER_GAS_CONSTANT, WATER_REST_DENSITY);
 }
 
-Particle* Particle::createFogParticle(long double x, long double y, long double z, long double velocity) {
+Particle* Particle::createFogParticle(long double x, long double y, long double z, ThreeDVector* velocity) {
 	extern long double FOG_MASS;
 	extern long double FOG_VICOSITY_COEFFICIENT;
 	extern long double FOG_BUOYANCY_STRENGTH;
