@@ -186,7 +186,6 @@ void parseObj(const char* filename) {
 
 void advanceOneTimestep() {
   //Calculate densities for this time step first
-  print(num_timesteps);
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
     Particle* particle = *it;
     particle->set_density(water_particles);

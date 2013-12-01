@@ -1,6 +1,7 @@
 #include <cmath>
 
 #include "particle.h"
+#include <iostream>
 
 using namespace std;
 
@@ -15,6 +16,7 @@ Particle::Particle(long double x, long double y, long double z, long double mass
 	this->gas_constant = gas_constant;
 	this->rest_density = rest_density;
 	this->temperature = temperature;
+	this->acceleration = new ThreeDVector(0, 0, 0);
 }
 
 Particle::~Particle() {
@@ -55,6 +57,7 @@ void Particle::set_acceleration(vector<Particle*> particles) {
 	// Acceleration = Force / density
 	net_force->scalar_multiply_bang(1 / this->density);
 
+	delete this->acceleration;
 	this->acceleration = net_force;
 }
 
@@ -158,7 +161,7 @@ ThreeDVector* Particle::gravity() {
 }
 
 ThreeDVector* Particle::wind() {
-	return new ThreeDVector(5, 0, 0);
+	return new ThreeDVector(0, 0, 0);
 }
 
 ThreeDVector* Particle::pressure() {
