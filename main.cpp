@@ -48,6 +48,12 @@ long double FOG_GAS_CONSTANT = 1.0;
 long double FOG_REST_DENSITY = 1.0;
 long double FOG_TEMP = 1.0;
 
+//COLORS
+typedef enum {
+    Color_Golden_Gate_Orange,
+    Color_Ground_Brown
+}Color;
+
 using namespace std;
 
 //Our Polygons/Primatives
@@ -315,23 +321,43 @@ void initScene(){
   glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0);
   glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0);
 
-  //Set Material Parameters
-  GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-  GLfloat diffuse_color[] = { 0.753, 0.211, 0.173, 1.0 };
-  GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
-  GLfloat shininess[] = { 50.0 };
-  GLfloat emission[] = {0, 0, 0, 1};
-
-  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient_color);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_color);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_color);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-  glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
-
   //glEnable(GL_BLEND);
   //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   myReshape(viewport.w,viewport.h);
+}
+
+void setColor(int color) {
+  switch (color) {
+    case Color_Golden_Gate_Orange: {
+      GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
+      GLfloat diffuse_color[] = { 0.753, 0.211, 0.173, 1.0 };
+      GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
+      GLfloat shininess[] = { 50.0 };
+      GLfloat emission[] = {0, 0, 0, 1};
+
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
+      break;
+    }
+    case Color_Ground_Brown: {
+      GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
+      GLfloat diffuse_color[] = { 0.41176, 0.27451, 0.16078, 1.0 };
+      GLfloat specular_color[] = { 0, 0, 0, 1.0 };
+      GLfloat shininess[] = { 50.0 };
+      GLfloat emission[] = {0, 0, 0, 1};
+
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
+      break;
+    }
+  }
 }
 
 //****************************************************
@@ -358,7 +384,10 @@ void myDisplay() {
   // Enable shading
   glShadeModel(GL_SMOOTH);
 
+  setColor(Color_Golden_Gate_Orange);
+
   long double scale_factor = 1.0/10000.0;
+  glPushMatrix();
   glScalef(scale_factor, scale_factor, scale_factor);
   glTranslatef(-center_x, -center_y, -center_z);
   // Start drawing
@@ -374,6 +403,23 @@ void myDisplay() {
     }
     glEnd();
   }
+  glPopMatrix();
+
+  setColor(Color_Ground_Brown);
+
+  //BOUNDING SURFACE
+  glBegin(GL_POLYGON);  
+  glNormal3f(0, 1, 0);
+  glVertex3f(-10000, -250, -10000);
+  glNormal3f(0, 1, 0);
+  glVertex3f(-10000, -250, 10000);
+  glNormal3f(0, 1, 0);
+  glVertex3f(10000, -250, 10000);
+  glNormal3f(0, 1, 0);
+  glVertex3f(10000, -250, -10000);
+  glEnd();
+
+
 
   if (save) {
     int w = glutGet(GLUT_WINDOW_WIDTH);
