@@ -5,7 +5,8 @@
 using namespace std;
 
 Particle::Particle(long double x, long double y, long double z, long double mass, 
-		ThreeDVector* velocity, long double viscosity_coefficient, long double buoyancy_strength, long double gas_constant, long double rest_density) {
+		ThreeDVector* velocity, long double viscosity_coefficient, long double buoyancy_strength, 
+		long double gas_constant, long double rest_density, long double temperature) {
 	this->position = new ThreeDVector(x, y, z);
 	this->mass = mass;
 	this->velocity = velocity;
@@ -13,11 +14,13 @@ Particle::Particle(long double x, long double y, long double z, long double mass
 	this->buoyancy_strength = buoyancy_strength;
 	this->gas_constant = gas_constant;
 	this->rest_density = rest_density;
+	this->temperature = temperature;
 }
 
 Particle::~Particle() {
 	delete this->position;
 	delete this->velocity;
+	delete this->acceleration;
 }
 
 void Particle::set_density(vector<Particle*> particles) {
@@ -29,6 +32,71 @@ void Particle::set_density(vector<Particle*> particles) {
 	}
 	//TODO Save density?
 	this->density = running_sum;
+}
+
+void Particle::set_acceleration(vector<Particle*> particles) {
+	//Assumes we have previously called set_density for all particles to have density values
+	//to use for this leapfrog step
+
+	ThreeDVector* net_force = new ThreeDVector();
+
+	ThreeDVector* external_force = this->externalForce();
+	ThreeDVector* pressure_force = this->pressureForce(particles);
+	ThreeDVector* viscosity_force = this->viscosityForce(particles);
+
+	net_force->vector_add_bang(external_force);
+	net_force->vector_add_bang(pressure_force);
+	net_force->vector_add_bang(viscosity_force);
+
+	delete external_force;
+	delete pressure_force;
+	delete viscosity_force;
+
+	// Acceleration = Force / density
+	net_force->scalar_multiply_bang(1 / this->density);
+
+	this->acceleration = net_force;
+}
+
+void Particle::leapfrog_start(long double dt) {
+	//Assumes that we have already calculated acceleration for this timestep
+	//This is used to initialize the half time step velocities
+
+	//Set Half Step Velocity
+	ThreeDVector* a_dt_over_2 = this->acceleration->scalar_multiply(dt/2);
+	this->velocity_half = this->velocity->vector_add(a_dt_over_2);
+	delete a_dt_over_2;
+
+	//Set Full Step Velocity
+	ThreeDVector* a_dt = this->acceleration->scalar_multiply(dt);
+	this->velocity->vector_add_bang(a_dt);
+	delete a_dt;
+
+	//Set Full Step Position
+	ThreeDVector* v_dt = this->velocity_half->scalar_multiply(dt);
+	this->position->vector_add_bang(v_dt);
+	delete v_dt;
+}
+
+void Particle::leapfrog_step(long double dt) {
+	//Assumes that we have already calculated acceleration for this timestep
+	//This is used to set half step velocities after the initial leapfrog
+
+	//Set Half Step Velocity
+	ThreeDVector* a_dt = this->acceleration->scalar_multiply(dt);
+	this->velocity_half->vector_add_bang(a_dt);
+	delete a_dt;
+
+	//Set Full Step Velocity For acceleration calculations
+	ThreeDVector* a_dt_over_2 = this->acceleration->scalar_multiply(dt/2);
+	delete this->velocity;
+	this->velocity = this->velocity_half->vector_add(a_dt_over_2);
+	delete a_dt_over_2;
+
+	//Set Full Step Position
+	ThreeDVector* v_dt = this->velocity_half->scalar_multiply(dt);
+	this->position->vector_add_bang(v_dt);
+	delete v_dt;
 }
 
 ThreeDVector* Particle::viscosityForce(vector<Particle*> particles) {
@@ -68,17 +136,20 @@ ThreeDVector* Particle::pressureForce(vector<Particle*> particles) {
 }
 
 ThreeDVector* Particle::externalForce() {
-	ThreeDVector* externalForce = new ThreeDVector();
+	ThreeDVector* external_force = new ThreeDVector();
 	ThreeDVector* gravity = this->gravity();
 	ThreeDVector* wind = this->wind();
+	ThreeDVector* buoyancy = this->buoyancy();
 
-	externalForce->vector_add_bang(gravity);
-	externalForce->vector_add_bang(wind);
+	external_force->vector_add_bang(gravity);
+	external_force->vector_add_bang(wind);
+	external_force->vector_add_bang(buoyancy);
 
 	delete gravity;
 	delete wind;
+	delete buoyancy;
 
-	return externalForce;
+	return external_force;
 }
 
 ThreeDVector* Particle::gravity() {
@@ -86,7 +157,7 @@ ThreeDVector* Particle::gravity() {
 	return CONSTANT_OF_GRAVITY->scalar_multiply(this->density);
 }
 
-ThreeDVector* Particle::wind() {
+ThreeDVector* Particle::wind() {,m
 	return new ThreeDVector(5, 0, 0);
 }
 
@@ -96,13 +167,20 @@ ThreeDVector* Particle::pressure() {
 	return new ThreeDVector(pressure, pressure, pressure);
 }
 
+ThreeDVector* Particle::buoyancy() {
+	extern long double AMBIENT_TEMP;
+	extern ThreeDVector* CONSTANT_OF_GRAVITY;
+	return CONSTANT_OF_GRAVITY->scalar_multiply(-this->buoyancy_strength * (this->temperature - AMBIENT_TEMP));
+}
+
 Particle* Particle::createWaterParticle(long double x, long double y, long double z, ThreeDVector* velocity) {
 	extern long double WATER_MASS;
 	extern long double WATER_VICOSITY_COEFFICIENT;
 	extern long double WATER_BUOYANCY_STRENGTH;
 	extern long double WATER_GAS_CONSTANT;
 	extern long double WATER_REST_DENSITY;
-	return new Particle(x, y, z, WATER_MASS, velocity, WATER_VICOSITY_COEFFICIENT, WATER_BUOYANCY_STRENGTH, WATER_GAS_CONSTANT, WATER_REST_DENSITY);
+	extern long double WATER_TEMP;
+	return new Particle(x, y, z, WATER_MASS, velocity, WATER_VICOSITY_COEFFICIENT, WATER_BUOYANCY_STRENGTH, WATER_GAS_CONSTANT, WATER_REST_DENSITY, WATER_TEMP);
 }
 
 Particle* Particle::createFogParticle(long double x, long double y, long double z, ThreeDVector* velocity) {
@@ -111,7 +189,8 @@ Particle* Particle::createFogParticle(long double x, long double y, long double 
 	extern long double FOG_BUOYANCY_STRENGTH;
 	extern long double FOG_GAS_CONSTANT;
 	extern long double FOG_REST_DENSITY;
-	return new Particle(x, y, z, FOG_MASS, velocity, FOG_VICOSITY_COEFFICIENT, FOG_BUOYANCY_STRENGTH, FOG_GAS_CONSTANT, FOG_REST_DENSITY);
+	extern long double FOG_TEMP;
+	return new Particle(x, y, z, FOG_MASS, velocity, FOG_VICOSITY_COEFFICIENT, FOG_BUOYANCY_STRENGTH, FOG_GAS_CONSTANT, FOG_REST_DENSITY, FOG_TEMP);
 }
 
 //Using a Gaussian Kernal Function

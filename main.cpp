@@ -32,22 +32,29 @@
 long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, 9.8, 0);
+long double AMBIENT_TEMP = 25;
 
 long double WATER_MASS = 1.0;
 long double WATER_VICOSITY_COEFFICIENT = 1.0;
 long double WATER_BUOYANCY_STRENGTH = 1.0;
 long double WATER_GAS_CONSTANT = 1.0;
 long double WATER_REST_DENSITY = 1.0;
+long double WATER_TEMP = 1.0;
 long double FOG_MASS = 1.0;
 long double FOG_VICOSITY_COEFFICIENT = 1.0;
 long double FOG_BUOYANCY_STRENGTH = 1.0;
 long double FOG_GAS_CONSTANT = 1.0;
 long double FOG_REST_DENSITY = 1.0;
+long double FOG_TEMP = 1.0;
 
 using namespace std;
 
-//The vertices that define our polygon
+//Our Polygons/Primatives
 vector<vector<pair<ThreeDVector*, ThreeDVector*> > > polygons;
+
+//Our Particles. Should we combine our water/fog particles?
+vector<Particle*> fog_particles;
+vector<Particle*> water_particles;
 
 //Save Boolean
 bool save = false;
