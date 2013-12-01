@@ -33,6 +33,7 @@ long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, 9.8, 0);
 long double AMBIENT_TEMP = 25;
+long double TIMESTEP_DURATION = 1;
 
 long double WATER_MASS = 1.0;
 long double WATER_VICOSITY_COEFFICIENT = 1.0;
@@ -60,6 +61,9 @@ vector<Particle*> water_particles;
 bool save = false;
 //Filename
 static const char* file_name;
+
+//How Many Timesteps we have advanced so far
+long double num_timesteps = 0;
 
 //Max/Min x,y,z
 long double max_x = numeric_limits<long double>::min();
@@ -172,6 +176,61 @@ void parseObj(const char* filename) {
   }
   
   vertices.clear();
+}
+
+void advanceOneTimestep() {
+  //Calculate densities for this time step first
+  print(num_timesteps);
+  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+    Particle* particle = *it;
+    particle->set_density(water_particles);
+  }
+
+  //Calculate accelerations next
+  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+    Particle* particle = *it;
+    particle->set_acceleration(water_particles);
+  }
+
+  //Then perform leapfrog!
+  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+    Particle* particle = *it;
+    
+    //First Timestep
+    if (num_timesteps == 0) {
+      particle->leapfrog_start(TIMESTEP_DURATION);
+    //Not First Timestep
+    } else {
+      particle->leapfrog_step(TIMESTEP_DURATION);
+    }
+  }
+
+  //Calculate densities for this time step first
+  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+    Particle* particle = *it;
+    particle->set_density(fog_particles);
+  }
+
+  //Calculate accelerations next
+  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+    Particle* particle = *it;
+    particle->set_acceleration(fog_particles);
+  }
+
+  //Then perform leapfrog!
+  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+    Particle* particle = *it;
+    
+    //First Timestep
+    if (num_timesteps == 0) {
+      particle->leapfrog_start(TIMESTEP_DURATION);
+    //Not First Timestep
+    } else {
+      particle->leapfrog_step(TIMESTEP_DURATION);
+    }
+  }
+
+  num_timesteps++;
 }
 
 //****************************************************
@@ -344,6 +403,15 @@ void mySpecialKeyFunc(int key, int x, int y){
 
 }
 
+void myFrameMove() {
+  //nothing here for now
+  #ifdef _WIN32
+    Sleep(10);                                   //give ~10ms back to OS (so as not to waste the CPU)
+  #endif
+    advanceOneTimestep();
+    glutPostRedisplay(); // forces glut to call the display function (myDisplay())
+}
+
 int main(int argc, char *argv[]) {
 
   for (int i = 10; i < argc; i++) {
@@ -358,6 +426,9 @@ int main(int argc, char *argv[]) {
 
   //Parse Polygons the Golden Gate
   parseObj("Golden Gate Bridge.obj");
+
+  Particle* water = Particle::createWaterParticle(0, 0, 0);
+  water_particles.push_back(water);
 
   //This initializes glut
   glutInit(&argc, argv);
@@ -380,6 +451,7 @@ int main(int argc, char *argv[]) {
   glutDisplayFunc(myDisplay);       // function to run when its time to draw something
   glutKeyboardFunc(myKeyboardFunc); // basic keys callback
   glutSpecialFunc(mySpecialKeyFunc); //special keys callback
+  glutIdleFunc(myFrameMove);                   // function to run when not handling any other task
 
   glutMainLoop();             // infinite loop that will keep drawing and resizing
   // and whatever else

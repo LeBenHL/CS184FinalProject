@@ -157,7 +157,7 @@ ThreeDVector* Particle::gravity() {
 	return CONSTANT_OF_GRAVITY->scalar_multiply(this->density);
 }
 
-ThreeDVector* Particle::wind() {,m
+ThreeDVector* Particle::wind() {
 	return new ThreeDVector(5, 0, 0);
 }
 
