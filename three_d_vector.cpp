@@ -1,6 +1,7 @@
 #include <cmath>
 #include "three_d_vector.h"
 #include <iostream>
+#include <stdio.h> 
 #include <cfloat>
 using namespace std;
 
