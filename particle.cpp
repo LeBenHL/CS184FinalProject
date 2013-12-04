@@ -22,6 +22,7 @@ Particle::Particle(long double x, long double y, long double z, long double mass
 Particle::~Particle() {
 	delete this->position;
 	delete this->velocity;
+	delete this->velocity_half;
 	delete this->acceleration;
 }
 
@@ -176,6 +177,15 @@ ThreeDVector* Particle::buoyancy() {
 	return CONSTANT_OF_GRAVITY->scalar_multiply(-this->buoyancy_strength * (this->temperature - AMBIENT_TEMP));
 }
 
+long double Particle::color(vector<Particle*> particles) {
+	long double running_sum = 0;
+	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
+		Particle* particle = *it;
+		running_sum += particle->mass / particle->density * Particle::poly6Kernel(this->position->distance(particle->position), 1);
+	}
+	return running_sum;
+}
+
 Particle* Particle::createWaterParticle(long double x, long double y, long double z, ThreeDVector* velocity) {
 	extern long double WATER_MASS;
 	extern long double WATER_VICOSITY_COEFFICIENT;
@@ -196,7 +206,6 @@ Particle* Particle::createFogParticle(long double x, long double y, long double 
 	return new Particle(x, y, z, FOG_MASS, velocity, FOG_VICOSITY_COEFFICIENT, FOG_BUOYANCY_STRENGTH, FOG_GAS_CONSTANT, FOG_REST_DENSITY, FOG_TEMP);
 }
 
-//Using a Gaussian Kernal Function
 long double Particle::poly6Kernel(long double r, long double h) {
 	if (r >= 0 && r <= h) {
 		extern long double PI;

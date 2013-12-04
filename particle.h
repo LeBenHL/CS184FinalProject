@@ -1,3 +1,4 @@
+
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
@@ -42,6 +43,8 @@ class Particle {
 		ThreeDVector* gravity();
 		ThreeDVector* wind();
 		ThreeDVector* buoyancy();
+
+		long double color(vector<Particle*> particles);
 
 		static Particle* createWaterParticle(long double x, long double y, long double z, ThreeDVector* velocity=new ThreeDVector());
 		static Particle* createFogParticle(long double x, long double y, long double z, ThreeDVector* velocity=new ThreeDVector());

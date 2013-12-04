@@ -31,9 +31,10 @@
 //CONSTANTS
 long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
-ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, 9.8, 0);
+ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION = 1;
+long double TIMESTEP_DURATION = .1;
+long double PARTICLE_RADIUS = 0.5;
 
 long double WATER_MASS = 1.0;
 long double WATER_VICOSITY_COEFFICIENT = 1.0;
@@ -51,7 +52,9 @@ long double FOG_TEMP = 1.0;
 //COLORS
 typedef enum {
     Color_Golden_Gate_Orange,
-    Color_Ground_Brown
+    Color_Ground_Brown,
+    Water,
+    Fog
 }Color;
 
 using namespace std;
@@ -67,6 +70,13 @@ vector<Particle*> water_particles;
 bool save = false;
 //Filename
 static const char* file_name;
+
+//Types of Surface Reconstruction
+bool spheres = true;
+bool marching_cubes = false;
+
+//For Point Splatting Surface Reconstruction
+long double isovalue_threshold = 0.5;
 
 //How Many Timesteps we have advanced so far
 long double num_timesteps = 0;
@@ -282,7 +292,7 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 void initScene(){
-  glClearColor(0.52941f, 0.80784f, 0.98039f, 1.0f); // Clear to black, fully transparent
+  glClearColor(0.52941f, 0.80784f, 0.98039f, 0.0f); // Clear to Sky Blue, fully transparent
 
   // Enable lighting and the light we have set up
   glEnable(GL_LIGHTING);
@@ -356,8 +366,42 @@ void setColor(int color) {
       glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
       break;
     }
+    case Water: {
+      GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
+      GLfloat diffuse_color[] = { 0.14510, 0.42745, 0.48235, 1.0 };
+      GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
+      GLfloat shininess[] = { 50.0 };
+      GLfloat emission[] = {0, 0, 0, 1};
+
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
+      break;
+    }
+    case Fog: {
+      GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
+      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, 1.0 };
+      GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
+      GLfloat shininess[] = { 50.0 };
+      GLfloat emission[] = {0, 0, 0, 1};
+
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular_color);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, emission);
+      break;
+    }
   }
 }
+
+vector<vector<pair<ThreeDVector*, ThreeDVector*> > > marchingCubes(vector<Particle*> particles) {
+  vector<vector<pair<ThreeDVector*, ThreeDVector*> > > mesh;
+  return mesh;
+}
+
 
 //****************************************************
 // function that does the actual drawing of stuff
@@ -383,8 +427,8 @@ void myDisplay() {
   // Enable shading
   glShadeModel(GL_SMOOTH);
 
+  //BRIDGE
   setColor(Color_Golden_Gate_Orange);
-
   long double scale_factor = 1.0/10000.0;
   glPushMatrix();
   glScalef(scale_factor, scale_factor, scale_factor);
@@ -404,9 +448,8 @@ void myDisplay() {
   }
   glPopMatrix();
 
+  //BOUNDING SURFACES
   setColor(Color_Ground_Brown);
-
-  //BOUNDING SURFACE
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
   glVertex3f(-10000, -250, -10000);
@@ -417,6 +460,51 @@ void myDisplay() {
   glNormal3f(0, 1, 0);
   glVertex3f(10000, -250, -10000);
   glEnd();
+
+  //FLUIDS
+  if (spheres) {
+    setColor(Water);
+    for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+      Particle* particle = *it;
+      glutSolidSphere(PARTICLE_RADIUS, 100, 100);
+    }
+
+    setColor(Fog);
+    for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+      Particle* particle = *it;
+      glutSolidSphere(PARTICLE_RADIUS, 100, 100);
+    }
+  } else if (marching_cubes) {
+    setColor(Water);
+    vector<vector<pair<ThreeDVector*, ThreeDVector*> > > water_mesh = marchingCubes(water_particles);
+    for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = water_mesh.begin(); it != water_mesh.end(); ++it) {
+      vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;
+      glBegin(GL_POLYGON);                      // Draw A Polygon
+      for(vector<pair<ThreeDVector*, ThreeDVector*> >::iterator i = polygon.begin(); i != polygon.end(); ++i) {
+        pair<ThreeDVector*, ThreeDVector*> vertex_pair = *i;
+        ThreeDVector* vertex = vertex_pair.first;
+        ThreeDVector* normal = vertex_pair.second;
+        glNormal3f(normal->x, normal->y, normal->z);
+        glVertex3f(vertex->x, vertex->y, vertex->z);
+      }
+      glEnd();
+    }
+
+    setColor(Fog);
+    vector<vector<pair<ThreeDVector*, ThreeDVector*> > > fog_mesh = marchingCubes(fog_particles);
+    for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = fog_mesh.begin(); it != fog_mesh.end(); ++it) {
+      vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;
+      glBegin(GL_POLYGON);                      // Draw A Polygon
+      for(vector<pair<ThreeDVector*, ThreeDVector*> >::iterator i = polygon.begin(); i != polygon.end(); ++i) {
+        pair<ThreeDVector*, ThreeDVector*> vertex_pair = *i;
+        ThreeDVector* vertex = vertex_pair.first;
+        ThreeDVector* normal = vertex_pair.second;
+        glNormal3f(normal->x, normal->y, normal->z);
+        glVertex3f(vertex->x, vertex->y, vertex->z);
+      }
+      glEnd();
+    }
+  }
 
 
 
