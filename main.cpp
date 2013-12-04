@@ -33,14 +33,15 @@ long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION = .1;
-long double PARTICLE_RADIUS = 0.5;
+long double TIMESTEP_DURATION = 0.5;
+long double PARTICLE_RADIUS = 1;
+long double H = 4;
 
-long double WATER_MASS = 1.0;
+long double WATER_MASS = 20;
 long double WATER_VICOSITY_COEFFICIENT = 1.0;
-long double WATER_BUOYANCY_STRENGTH = 1.0;
+long double WATER_BUOYANCY_STRENGTH = 0.0;
 long double WATER_GAS_CONSTANT = 1.0;
-long double WATER_REST_DENSITY = 1.0;
+long double WATER_REST_DENSITY = 1;
 long double WATER_TEMP = 1.0;
 long double FOG_MASS = 1.0;
 long double FOG_VICOSITY_COEFFICIENT = 1.0;
@@ -88,6 +89,19 @@ long double max_y = numeric_limits<long double>::min();
 long double min_y = numeric_limits<long double>::max();
 long double max_z = numeric_limits<long double>::min();
 long double min_z = numeric_limits<long double>::max();
+
+//Bounding Box
+long double left_bound;
+long double right_bound;
+long double top_bound;
+long double bottom_bound;
+long double front_bound;
+long double back_bound;
+
+long double scale_factor = 1.0/10000.0;
+
+ThreeDVector* grid_size;
+vector<vector<vector<vector<Particle*> > > > water_particle_grid;
 
 //Print Function for debugging
 void print(string _string) {
@@ -194,23 +208,109 @@ void parseObj(const char* filename) {
   vertices.clear();
 }
 
+void setBounds() {
+  long double center_x = (max_x + min_x) / 2;
+  long double center_y = (max_y + min_y) / 2;
+  long double center_z = (max_z + min_z) / 2;
+
+  long double transformed_max_x = (max_x - center_x) * scale_factor;
+  long double transformed_min_x = (min_x - center_x) * scale_factor;
+  long double transformed_max_y = (max_y - center_y) * scale_factor;
+  long double transformed_min_y = (min_y - center_y) * scale_factor;
+  long double transformed_max_z = (max_z - center_z) * scale_factor;
+  long double transformed_min_z = (min_z - center_z) * scale_factor;
+
+  left_bound = transformed_min_x * 2;
+  right_bound = transformed_max_x * 2;
+  bottom_bound = transformed_min_y * 2;
+  top_bound = transformed_max_y * 2;
+  front_bound = transformed_max_z * 10;
+  back_bound = transformed_min_z * 10;
+
+  int x = (right_bound - left_bound)/H;
+  int y = (top_bound - bottom_bound)/H;
+  int z = (front_bound - back_bound)/H;
+
+  grid_size = new ThreeDVector(x, y, z);
+
+  water_particle_grid.resize(x);
+
+  for (int i = 0; i < x; i++) {
+    water_particle_grid[i].resize(y);
+    for (int j = 0; j < y; j++) {
+       water_particle_grid[i][j].resize(z);
+    }
+  }
+
+}
+
+bool withInGrid(int x, int y, int z) {
+  return x >= 0 && x < grid_size->x && y >= 0 && y < grid_size->y && z >= 0 && z < grid_size->z;
+}
+
+void addToGrid(Particle* particle, vector<vector<vector<vector<Particle*> > > > *grid) {
+  int x = (particle->position->x - left_bound) / H;  
+  int y = (particle->position->y - bottom_bound) / H; 
+  int z = (particle->position->z - back_bound) / H; 
+
+  if (withInGrid(x, y, z)) {
+    (*grid)[x][y][z].push_back(particle);
+  }
+}
+
+void removeFromGrid(Particle* particle, vector<vector<vector<vector<Particle*> > > > *grid) {
+  int x = (particle->position->x - left_bound) / H;  
+  int y = (particle->position->y - bottom_bound) / H; 
+  int z = (particle->position->z - back_bound) / H; 
+
+  if (withInGrid(x, y, z)) {
+    vector<Particle*> particles_cell =  (*grid)[x][y][z];
+    particles_cell.erase(remove(particles_cell.begin(), particles_cell.end(), particle), particles_cell.end());
+  }
+}
+
+void getNeighbors(Particle* particle, vector<vector<vector<vector<Particle*> > > > *grid, vector<Particle*> *neighbors) {
+  int x = (particle->position->x - left_bound) / H;  
+  int y = (particle->position->y - bottom_bound) / H; 
+  int z = (particle->position->z - back_bound) / H; 
+
+  for (int i = -1; i <= 1; i++) {
+    for (int j = -1; j <= 1; j++) {
+      for (int k = -1; k <= 1; k++) {
+        if (withInGrid(x+i, y+j, z+k)) {
+          (*neighbors).insert((*neighbors).end(), (*grid)[x+i][y+j][z+k].begin(), (*grid)[x+i][y+j][z+k].end());
+        }
+      }
+    }
+  }
+}
+
 void advanceOneTimestep() {
   //Calculate densities for this time step first
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
     Particle* particle = *it;
-    particle->set_density(water_particles);
+    vector<Particle*>* neighbors = new vector<Particle*>;
+    getNeighbors(particle, &water_particle_grid, neighbors);
+
+    particle->set_density(*neighbors);
+    delete neighbors;
   }
 
   //Calculate accelerations next
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
     Particle* particle = *it;
-    particle->set_acceleration(water_particles);
+    vector<Particle*>* neighbors = new vector<Particle*>;
+    getNeighbors(particle, &water_particle_grid, neighbors);
+
+    particle->set_acceleration(*neighbors);
+    delete neighbors;
   }
 
   //Then perform leapfrog!
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
     Particle* particle = *it;
     
+    removeFromGrid(particle, &water_particle_grid);
     //First Timestep
     if (num_timesteps == 0) {
       particle->leapfrog_start(TIMESTEP_DURATION);
@@ -218,7 +318,9 @@ void advanceOneTimestep() {
     } else {
       particle->leapfrog_step(TIMESTEP_DURATION);
     }
+    addToGrid(particle, &water_particle_grid);
   }
+
 
   //Calculate densities for this time step first
   for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
@@ -276,10 +378,6 @@ void myReshape(int w, int h) {
   glLoadIdentity();
 
   long double radius = max(max_x - min_x, max(max_y - min_y, max_z - min_x)) / 2;
-  long double center_x = (max_x + min_x) / 2;
-  long double center_y = (max_y + min_y) / 2;
-  long double center_z = (max_z + min_z) / 2;
-
   long double multiplier = 1;
 
   //glOrtho((center_x - radius) * multiplier, (center_x + radius) * multiplier, (center_y - radius) * multiplier, (center_y + radius) * multiplier, 1.0, 1.0 + radius);
@@ -302,7 +400,7 @@ void initScene(){
   glEnable(GL_RESCALE_NORMAL);
 
   //Set lighting parameters
-  GLfloat light_position0[] = {0.0, 1.0, -1.0, 0};
+  GLfloat light_position0[] = {0.0, 1.0, 1.0, 0};
   GLfloat light_ambient0[] = {0, 0, 0, 1};
   GLfloat light_diffuse0[] = {2.0, 2.0, 2.0, 1};
   GLfloat light_specular0[] = {2.0, 2.0, 2.0, 1};
@@ -413,14 +511,13 @@ void myDisplay() {
   glMatrixMode(GL_MODELVIEW);         // indicate we are specifying camera transformations
   glLoadIdentity();                   // make sure transformation is "zero'd"
 
-  long double radius = max(max_x - min_x, max(max_y - min_y, max_z - min_x)) / 2;
   long double center_x = (max_x + min_x) / 2;
   long double center_y = (max_y + min_y) / 2;
   long double center_z = (max_z + min_z) / 2;
 
   //gluLookAt(center_x + 1000000, center_y, center_z - 2500000, center_x + 200000, center_y, center_z, 0, 1, 0);
 
-  gluLookAt(220, 0, -150, 175, 0, 0, 0, 1, 0);
+  gluLookAt(-250, 0, 125, -200, 0, 0, 0, 1, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -429,7 +526,6 @@ void myDisplay() {
 
   //BRIDGE
   setColor(Color_Golden_Gate_Orange);
-  long double scale_factor = 1.0/10000.0;
   glPushMatrix();
   glScalef(scale_factor, scale_factor, scale_factor);
   glTranslatef(-center_x, -center_y, -center_z);
@@ -452,13 +548,13 @@ void myDisplay() {
   setColor(Color_Ground_Brown);
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -250, -10000);
+  glVertex3f(-10000, -70.0, -10000);
   glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -250, 10000);
+  glVertex3f(-10000, -70.0, 10000);
   glNormal3f(0, 1, 0);
-  glVertex3f(10000, -250, 10000);
+  glVertex3f(10000, -70.0, 10000);
   glNormal3f(0, 1, 0);
-  glVertex3f(10000, -250, -10000);
+  glVertex3f(10000, -70.0, -10000);
   glEnd();
 
   //FLUIDS
@@ -466,13 +562,19 @@ void myDisplay() {
     setColor(Water);
     for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
       Particle* particle = *it;
+      glPushMatrix();
+      glTranslatef(particle->position->x, particle->position->y, particle->position->z);
       glutSolidSphere(PARTICLE_RADIUS, 100, 100);
+      glPopMatrix();
     }
 
     setColor(Fog);
     for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
       Particle* particle = *it;
+      glPushMatrix();
+      glTranslatef(particle->position->x, particle->position->y, particle->position->z);
       glutSolidSphere(PARTICLE_RADIUS, 100, 100);
+      glPopMatrix();
     }
   } else if (marching_cubes) {
     setColor(Water);
@@ -559,9 +661,20 @@ int main(int argc, char *argv[]) {
 
   //Parse Polygons the Golden Gate
   parseObj("Golden Gate Bridge.obj");
+  setBounds();
+  
+  for (int x = -85; x < 75; x++) {
+    for (int y = -5; y < 5; y++) {
+      for (int z = -10; z < 10; z++) {
+        Particle* water = Particle::createWaterParticle(x * 4, y * 4 , z * 4);
+        addToGrid(water, &water_particle_grid);
+        water_particles.push_back(water);
+      }
+    }
+  }
 
-  Particle* water = Particle::createWaterParticle(0, 0, 0);
-  water_particles.push_back(water);
+  //Particle* water = Particle::createWaterParticle(1 * .75, 1 * .75 , 1 * .75);
+  //water_particles.push_back(water);
 
   //This initializes glut
   glutInit(&argc, argv);

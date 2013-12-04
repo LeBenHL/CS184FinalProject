@@ -30,10 +30,12 @@ void Particle::set_density(vector<Particle*> particles) {
 	long double running_sum = 0;
 	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
 		Particle* particle = *it;
-		//TODO what is correct value of H?
-		running_sum += particle->mass * Particle::poly6Kernel(this->position->distance(particle->position), 1);
+		extern long double H;
+		running_sum += particle->mass * Particle::poly6Kernel(this->position->distance(particle->position), H);
 	}
 	//TODO Save density?
+
+	//cout << running_sum << endl;
 	this->density = running_sum;
 }
 
@@ -110,7 +112,8 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*> particles) {
 		//TODO what is correct value of H?
 		ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
 		velocity_difference->scalar_multiply_bang(particle->mass / particle->density);
-		velocity_difference->scalar_multiply_bang(Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), 1));
+		extern long double H;
+		velocity_difference->scalar_multiply_bang(Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), H));
 		running_sum->vector_add_bang(velocity_difference);
 		delete velocity_difference;
 	}
@@ -128,7 +131,9 @@ ThreeDVector* Particle::pressureForce(vector<Particle*> particles) {
 		ThreeDVector* average_pressure = particle_pressure->vector_add(my_pressure);
 		average_pressure->scalar_multiply_bang(0.5);
 		average_pressure->scalar_multiply_bang(particle->mass / particle->density);
-		average_pressure->scalar_multiply_bang(Particle::spikyGradientKernel(this->position->distance(particle->position), 1));
+		extern long double H;
+		average_pressure->scalar_multiply_bang(Particle::spikyGradientKernel(this->position->distance(particle->position), H));
+		long double multiplier = Particle::spikyGradientKernel(this->position->distance(particle->position), H);
 		running_sum->vector_add_bang(average_pressure);
 		delete particle_pressure;
 		delete average_pressure;
@@ -181,7 +186,8 @@ long double Particle::color(vector<Particle*> particles) {
 	long double running_sum = 0;
 	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
 		Particle* particle = *it;
-		running_sum += particle->mass / particle->density * Particle::poly6Kernel(this->position->distance(particle->position), 1);
+		extern long double H;
+		running_sum += particle->mass / particle->density * Particle::poly6Kernel(this->position->distance(particle->position), H);
 	}
 	return running_sum;
 }
