@@ -1,7 +1,7 @@
 OBJS = main.o three_d_vector.o lodepng.o particle.o
 CC = g++
 INCLUDE = -I ./
-FLAGS = -O2
+FLAGS = -O3
 
 ifeq ($(shell sw_vers 2>/dev/null | grep Mac | awk '{ print $$2}'),Mac)
 	CFLAGS = -g -DGL_GLEXT_PROTOTYPES -I./include/ -I/usr/X11/include -DOSX

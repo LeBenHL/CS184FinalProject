@@ -298,7 +298,7 @@ void getNeighbors(Particle* particle, vector<vector<vector<vector<Particle*>* > 
 
 void advanceOneTimestep() {
   //Calculate densities for this time step first
-  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
     Particle* particle = *it;
     vector<Particle*>* neighbors = new vector<Particle*>;
     getNeighbors(particle, &water_particle_grid, neighbors);
@@ -307,7 +307,7 @@ void advanceOneTimestep() {
   }
 
   //Calculate accelerations next
-  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
     Particle* particle = *it;
     vector<Particle*>* neighbors = new vector<Particle*>;
     getNeighbors(particle, &water_particle_grid, neighbors);
@@ -317,12 +317,8 @@ void advanceOneTimestep() {
   }
 
   //Then perform leapfrog!
-  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
     Particle* particle = *it;
-    
-    int x = (particle->position->x - left_bound) / H;  
-    int y = (particle->position->y - bottom_bound) / H; 
-    int z = (particle->position->z - back_bound) / H;
 
     removeFromGrid(particle, &water_particle_grid);
     //First Timestep
@@ -337,19 +333,19 @@ void advanceOneTimestep() {
 
 
   //Calculate densities for this time step first
-  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
     Particle* particle = *it;
     particle->set_density(fog_particles);
   }
 
   //Calculate accelerations next
-  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
     Particle* particle = *it;
     particle->set_acceleration(fog_particles);
   }
 
   //Then perform leapfrog!
-  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
     Particle* particle = *it;
     
     //First Timestep
@@ -361,7 +357,7 @@ void advanceOneTimestep() {
     }
   }
 
-  num_timesteps++;
+  ++num_timesteps;
 }
 
 //****************************************************
@@ -392,7 +388,6 @@ void myReshape(int w, int h) {
   glLoadIdentity();
 
   long double radius = max(max_x - min_x, max(max_y - min_y, max_z - min_x)) / 2;
-  long double multiplier = 1;
 
   //glOrtho((center_x - radius) * multiplier, (center_x + radius) * multiplier, (center_y - radius) * multiplier, (center_y + radius) * multiplier, 1.0, 1.0 + radius);
   gluPerspective(90, float(w)/float(h), 1.0, 1.0 + radius * 10);
@@ -528,6 +523,7 @@ void myDisplay() {
   long double center_x = (max_x + min_x) / 2;
   long double center_y = (max_y + min_y) / 2;
   long double center_z = (max_z + min_z) / 2;
+  print((min_y - center_y) * scale_factor);
 
   //gluLookAt(center_x + 1000000, center_y, center_z - 2500000, center_x + 200000, center_y, center_z, 0, 1, 0);
 
@@ -562,13 +558,13 @@ void myDisplay() {
   setColor(Color_Ground_Brown);
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -70.0, -10000);
+  glVertex3f(-10000, -35.0, -10000);
   glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -70.0, 10000);
+  glVertex3f(-10000, -35.0, 10000);
   glNormal3f(0, 1, 0);
-  glVertex3f(10000, -70.0, 10000);
+  glVertex3f(10000, -35.0, 10000);
   glNormal3f(0, 1, 0);
-  glVertex3f(10000, -70.0, -10000);
+  glVertex3f(10000, -35.0, -10000);
   glEnd();
 
   //FLUIDS

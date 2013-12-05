@@ -28,7 +28,7 @@ Particle::~Particle() {
 
 void Particle::set_density(vector<Particle*> particles) {
 	long double running_sum = 0;
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
+	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
 		Particle* particle = *it;
 		extern long double H;
 		running_sum += particle->mass * Particle::poly6Kernel(this->position->distance(particle->position), H);
@@ -107,7 +107,7 @@ void Particle::leapfrog_step(long double dt) {
 
 ThreeDVector* Particle::viscosityForce(vector<Particle*> particles) {
 	ThreeDVector* running_sum = new ThreeDVector();
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
+	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
 		Particle* particle = *it;
 		//TODO what is correct value of H?
 		ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
@@ -124,7 +124,7 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*> particles) {
 ThreeDVector* Particle::pressureForce(vector<Particle*> particles) {
 	ThreeDVector* running_sum = new ThreeDVector();
 	ThreeDVector* my_pressure = this->pressure();
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
+	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
 		Particle* particle = *it;
 		//TODO what is correct value of H?
 		ThreeDVector* particle_pressure = particle->pressure();
@@ -133,7 +133,6 @@ ThreeDVector* Particle::pressureForce(vector<Particle*> particles) {
 		average_pressure->scalar_multiply_bang(particle->mass / particle->density);
 		extern long double H;
 		average_pressure->scalar_multiply_bang(Particle::spikyGradientKernel(this->position->distance(particle->position), H));
-		long double multiplier = Particle::spikyGradientKernel(this->position->distance(particle->position), H);
 		running_sum->vector_add_bang(average_pressure);
 		delete particle_pressure;
 		delete average_pressure;
@@ -184,7 +183,7 @@ ThreeDVector* Particle::buoyancy() {
 
 long double Particle::color(vector<Particle*> particles) {
 	long double running_sum = 0;
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); it++) {
+	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
 		Particle* particle = *it;
 		extern long double H;
 		running_sum += particle->mass / particle->density * Particle::poly6Kernel(this->position->distance(particle->position), H);
