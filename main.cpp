@@ -34,14 +34,14 @@ long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
 long double TIMESTEP_DURATION = 0.5;
-long double PARTICLE_RADIUS = 1;
-long double H = 4;
+long double PARTICLE_RADIUS = 0.5;
+long double H = 1;
 
-long double WATER_MASS = 20;
+long double WATER_MASS = 2;
 long double WATER_VICOSITY_COEFFICIENT = 1.0;
 long double WATER_BUOYANCY_STRENGTH = 0.0;
 long double WATER_GAS_CONSTANT = 1.0;
-long double WATER_REST_DENSITY = 1;
+long double WATER_REST_DENSITY = 2 * 1.56668;
 long double WATER_TEMP = 1.0;
 long double FOG_MASS = 1.0;
 long double FOG_VICOSITY_COEFFICIENT = 1.0;
@@ -98,10 +98,10 @@ long double bottom_bound;
 long double front_bound;
 long double back_bound;
 
-long double scale_factor = 1.0/10000.0;
+long double scale_factor = 1.0/25000.0;
 
 ThreeDVector* grid_size;
-vector<vector<vector<vector<Particle*> > > > water_particle_grid;
+vector<vector<vector<vector<Particle*>* > > > water_particle_grid;
 
 //Print Function for debugging
 void print(string _string) {
@@ -109,6 +109,10 @@ void print(string _string) {
 }
 
 void print(long double num) {
+  cout << num << endl;
+}
+
+void print(int num) {
   cout << num << endl;
 }
 
@@ -222,14 +226,14 @@ void setBounds() {
 
   left_bound = transformed_min_x * 2;
   right_bound = transformed_max_x * 2;
-  bottom_bound = transformed_min_y * 2;
-  top_bound = transformed_max_y * 2;
-  front_bound = transformed_max_z * 10;
-  back_bound = transformed_min_z * 10;
+  bottom_bound = transformed_min_y * 10;
+  top_bound = transformed_max_y * 10;
+  front_bound = transformed_max_z * 20;
+  back_bound = transformed_min_z * 20;
 
-  int x = (right_bound - left_bound)/H;
-  int y = (top_bound - bottom_bound)/H;
-  int z = (front_bound - back_bound)/H;
+  int x = ceil((right_bound - left_bound)/H);
+  int y = ceil((top_bound - bottom_bound)/H);
+  int z = ceil((front_bound - back_bound)/H);
 
   grid_size = new ThreeDVector(x, y, z);
 
@@ -238,7 +242,10 @@ void setBounds() {
   for (int i = 0; i < x; i++) {
     water_particle_grid[i].resize(y);
     for (int j = 0; j < y; j++) {
-       water_particle_grid[i][j].resize(z);
+      water_particle_grid[i][j].resize(z);
+      for (int k = 0; k < z; k++) {
+        water_particle_grid[i][j][k] = new vector<Particle*>;
+      }
     }
   }
 
@@ -248,28 +255,32 @@ bool withInGrid(int x, int y, int z) {
   return x >= 0 && x < grid_size->x && y >= 0 && y < grid_size->y && z >= 0 && z < grid_size->z;
 }
 
-void addToGrid(Particle* particle, vector<vector<vector<vector<Particle*> > > > *grid) {
+void addToGrid(Particle* particle, vector<vector<vector<vector<Particle*>* > > > *grid) {
   int x = (particle->position->x - left_bound) / H;  
   int y = (particle->position->y - bottom_bound) / H; 
   int z = (particle->position->z - back_bound) / H; 
 
   if (withInGrid(x, y, z)) {
-    (*grid)[x][y][z].push_back(particle);
+    (*grid)[x][y][z]->push_back(particle);
+  } else {
   }
 }
 
-void removeFromGrid(Particle* particle, vector<vector<vector<vector<Particle*> > > > *grid) {
+void removeFromGrid(Particle* particle, vector<vector<vector<vector<Particle*>* > > > *grid) {
   int x = (particle->position->x - left_bound) / H;  
   int y = (particle->position->y - bottom_bound) / H; 
-  int z = (particle->position->z - back_bound) / H; 
+  int z = (particle->position->z - back_bound) / H;
 
   if (withInGrid(x, y, z)) {
-    vector<Particle*> particles_cell =  (*grid)[x][y][z];
-    particles_cell.erase(remove(particles_cell.begin(), particles_cell.end(), particle), particles_cell.end());
+    vector<Particle*>* particles_cell =  (*grid)[x][y][z];
+    //print((int)particles_cell.size());
+    particles_cell->erase(remove(particles_cell->begin(), particles_cell->end(), particle), particles_cell->end());
+    //print((int)particles_cell.size());
+    //print("");
   }
 }
 
-void getNeighbors(Particle* particle, vector<vector<vector<vector<Particle*> > > > *grid, vector<Particle*> *neighbors) {
+void getNeighbors(Particle* particle, vector<vector<vector<vector<Particle*>* > > > *grid, vector<Particle*> *neighbors) {
   int x = (particle->position->x - left_bound) / H;  
   int y = (particle->position->y - bottom_bound) / H; 
   int z = (particle->position->z - back_bound) / H; 
@@ -278,7 +289,7 @@ void getNeighbors(Particle* particle, vector<vector<vector<vector<Particle*> > >
     for (int j = -1; j <= 1; j++) {
       for (int k = -1; k <= 1; k++) {
         if (withInGrid(x+i, y+j, z+k)) {
-          (*neighbors).insert((*neighbors).end(), (*grid)[x+i][y+j][z+k].begin(), (*grid)[x+i][y+j][z+k].end());
+          (*neighbors).insert((*neighbors).end(), (*grid)[x+i][y+j][z+k]->begin(), (*grid)[x+i][y+j][z+k]->end());
         }
       }
     }
@@ -291,7 +302,6 @@ void advanceOneTimestep() {
     Particle* particle = *it;
     vector<Particle*>* neighbors = new vector<Particle*>;
     getNeighbors(particle, &water_particle_grid, neighbors);
-
     particle->set_density(*neighbors);
     delete neighbors;
   }
@@ -310,6 +320,10 @@ void advanceOneTimestep() {
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
     Particle* particle = *it;
     
+    int x = (particle->position->x - left_bound) / H;  
+    int y = (particle->position->y - bottom_bound) / H; 
+    int z = (particle->position->z - back_bound) / H;
+
     removeFromGrid(particle, &water_particle_grid);
     //First Timestep
     if (num_timesteps == 0) {
@@ -517,7 +531,7 @@ void myDisplay() {
 
   //gluLookAt(center_x + 1000000, center_y, center_z - 2500000, center_x + 200000, center_y, center_z, 0, 1, 0);
 
-  gluLookAt(-250, 0, 125, -200, 0, 0, 0, 1, 0);
+  gluLookAt(-100, 0, 50, -80, 0, 0, 0, 1, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -663,18 +677,22 @@ int main(int argc, char *argv[]) {
   parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -85; x < 75; x++) {
-    for (int y = -5; y < 5; y++) {
+  
+  for (int x = -10; x < 10; x++) {
+    for (int y = -10; y < 10; y++) {
       for (int z = -10; z < 10; z++) {
-        Particle* water = Particle::createWaterParticle(x * 4, y * 4 , z * 4);
+        Particle* water = Particle::createWaterParticle(x * 1, y * 1 , z * 1);
         addToGrid(water, &water_particle_grid);
         water_particles.push_back(water);
       }
     }
   }
-
-  //Particle* water = Particle::createWaterParticle(1 * .75, 1 * .75 , 1 * .75);
-  //water_particles.push_back(water);
+  
+  /*
+  Particle* water = Particle::createWaterParticle(1, 1 , 1);
+  addToGrid(water, &water_particle_grid);
+  water_particles.push_back(water);
+  */
 
   //This initializes glut
   glutInit(&argc, argv);
