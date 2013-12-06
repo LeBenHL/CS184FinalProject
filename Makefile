@@ -1,6 +1,6 @@
-OBJS = main.o three_d_vector.o lodepng.o particle.o
+OBJS = main.o three_d_vector.o lodepng.o particle.o marching_cube.o
 CC = g++
-INCLUDE = -I ./
+INCLUDE = -I ./ -g -pg
 FLAGS = -O3
 
 ifeq ($(shell sw_vers 2>/dev/null | grep Mac | awk '{ print $$2}'),Mac)
@@ -25,6 +25,8 @@ lodepng.o: lodepng.h lodepng.cpp
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c lodepng.cpp -o lodepng.o
 particle.o: particle.h particle.cpp three_d_vector.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c particle.cpp -o particle.o
+marching_cube.o: marching_cube.h marching_cube.cpp three_d_vector.h particle.h
+	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c marching_cube.cpp -o marching_cube.o
 clean: 
 	$(RM) *.o as1
  

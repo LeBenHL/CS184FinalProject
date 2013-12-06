@@ -44,7 +44,10 @@ class Particle {
 		ThreeDVector* wind();
 		ThreeDVector* buoyancy();
 
-		long double color(vector<Particle*> particles);
+		long double color(vector<Particle*>* particles);
+
+		static long double colorAt(ThreeDVector* position, vector<Particle*>* particles);
+		static long double colorAt(long double x, long double y, long double z, vector<Particle*>* particles);
 
 		static Particle* createWaterParticle(long double x, long double y, long double z, ThreeDVector* velocity=new ThreeDVector());
 		static Particle* createFogParticle(long double x, long double y, long double z, ThreeDVector* velocity=new ThreeDVector());

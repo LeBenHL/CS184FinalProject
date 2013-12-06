@@ -27,6 +27,7 @@
 #include "three_d_vector.h"
 #include "lodepng.h"
 #include "particle.h"
+#include "marching_cube.h"
 
 //CONSTANTS
 long double PI = atan(1)*4;
@@ -36,6 +37,8 @@ long double AMBIENT_TEMP = 25;
 long double TIMESTEP_DURATION = 0.5;
 long double PARTICLE_RADIUS = 0.5;
 long double H = 1;
+long double MARCHING_CUBE_STEP_SIZE = 1;
+long double ISOVALUE_THRESHOLD = 0.5;
 
 long double WATER_MASS = 2;
 long double WATER_VICOSITY_COEFFICIENT = 1.0;
@@ -73,11 +76,8 @@ bool save = false;
 static const char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = true;
-bool marching_cubes = false;
-
-//For Point Splatting Surface Reconstruction
-long double isovalue_threshold = 0.5;
+bool spheres = false;
+bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
 long double num_timesteps = 0;
@@ -504,9 +504,30 @@ void setColor(int color) {
   }
 }
 
-vector<vector<pair<ThreeDVector*, ThreeDVector*> > > marchingCubes(vector<Particle*> particles) {
-  vector<vector<pair<ThreeDVector*, ThreeDVector*> > > mesh;
-  return mesh;
+void marchingCubes(vector<Particle*> particles) {
+  vector<MarchingCube*>* cubes = MarchingCube::generateGrid(&particles, MARCHING_CUBE_STEP_SIZE);
+  for (vector<MarchingCube*>::iterator it = cubes->begin(); it != cubes->end(); ++it) {
+    MarchingCube* cube = *it;
+    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = cube->triangulate(&particles, ISOVALUE_THRESHOLD);
+    for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = triangles->begin(); it != triangles->end(); ++it) {
+      vector<pair<ThreeDVector*, ThreeDVector*> > triangle = *it;
+      glBegin(GL_POLYGON);                      // Draw A Polygon
+      for(vector<pair<ThreeDVector*, ThreeDVector*> >::iterator i = triangle.begin(); i != triangle.end(); ++i) {
+        pair<ThreeDVector*, ThreeDVector*> vertex_pair = *i;
+        ThreeDVector* vertex = vertex_pair.first;
+        ThreeDVector* normal = vertex_pair.second;
+        glNormal3f(normal->x, normal->y, normal->z);
+        glVertex3f(vertex->x, vertex->y, vertex->z);
+        delete vertex;
+        delete normal;
+      }
+      glEnd();
+    }
+    delete triangles;
+    delete cube;
+  }
+
+  delete cubes;
 }
 
 
@@ -523,7 +544,7 @@ void myDisplay() {
   long double center_x = (max_x + min_x) / 2;
   long double center_y = (max_y + min_y) / 2;
   long double center_z = (max_z + min_z) / 2;
-  print((min_y - center_y) * scale_factor);
+  //print((min_y - center_y) * scale_factor);
 
   //gluLookAt(center_x + 1000000, center_y, center_z - 2500000, center_x + 200000, center_y, center_z, 0, 1, 0);
 
@@ -588,34 +609,12 @@ void myDisplay() {
     }
   } else if (marching_cubes) {
     setColor(Water);
-    vector<vector<pair<ThreeDVector*, ThreeDVector*> > > water_mesh = marchingCubes(water_particles);
-    for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = water_mesh.begin(); it != water_mesh.end(); ++it) {
-      vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;
-      glBegin(GL_POLYGON);                      // Draw A Polygon
-      for(vector<pair<ThreeDVector*, ThreeDVector*> >::iterator i = polygon.begin(); i != polygon.end(); ++i) {
-        pair<ThreeDVector*, ThreeDVector*> vertex_pair = *i;
-        ThreeDVector* vertex = vertex_pair.first;
-        ThreeDVector* normal = vertex_pair.second;
-        glNormal3f(normal->x, normal->y, normal->z);
-        glVertex3f(vertex->x, vertex->y, vertex->z);
-      }
-      glEnd();
-    }
+    print("WHAT");
+    marchingCubes(water_particles);
+    print("SUP");
 
     setColor(Fog);
-    vector<vector<pair<ThreeDVector*, ThreeDVector*> > > fog_mesh = marchingCubes(fog_particles);
-    for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = fog_mesh.begin(); it != fog_mesh.end(); ++it) {
-      vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;
-      glBegin(GL_POLYGON);                      // Draw A Polygon
-      for(vector<pair<ThreeDVector*, ThreeDVector*> >::iterator i = polygon.begin(); i != polygon.end(); ++i) {
-        pair<ThreeDVector*, ThreeDVector*> vertex_pair = *i;
-        ThreeDVector* vertex = vertex_pair.first;
-        ThreeDVector* normal = vertex_pair.second;
-        glNormal3f(normal->x, normal->y, normal->z);
-        glVertex3f(vertex->x, vertex->y, vertex->z);
-      }
-      glEnd();
-    }
+    marchingCubes(fog_particles);
   }
 
 
@@ -674,9 +673,9 @@ int main(int argc, char *argv[]) {
   setBounds();
   
   
-  for (int x = -10; x < 10; x++) {
-    for (int y = -10; y < 10; y++) {
-      for (int z = -10; z < 10; z++) {
+  for (int x = -5; x < 5; x++) {
+    for (int y = -5; y < 5; y++) {
+      for (int z = -5; z < 5; z++) {
         Particle* water = Particle::createWaterParticle(x * 1, y * 1 , z * 1);
         addToGrid(water, &water_particle_grid);
         water_particles.push_back(water);

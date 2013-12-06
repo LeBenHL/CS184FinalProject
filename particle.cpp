@@ -181,12 +181,23 @@ ThreeDVector* Particle::buoyancy() {
 	return CONSTANT_OF_GRAVITY->scalar_multiply(-this->buoyancy_strength * (this->temperature - AMBIENT_TEMP));
 }
 
-long double Particle::color(vector<Particle*> particles) {
+long double Particle::color(vector<Particle*>* particles) {
+	return Particle::colorAt(this->position, particles);
+}
+
+long double Particle::colorAt(long double x, long double y, long double z, vector<Particle*>* particles) {
+	ThreeDVector* position = new ThreeDVector(x, y, z);
+	long double color = Particle::colorAt(position, particles);
+	delete position;
+	return color;
+}
+
+long double Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
 	long double running_sum = 0;
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
+	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
 		extern long double H;
-		running_sum += particle->mass / particle->density * Particle::poly6Kernel(this->position->distance(particle->position), H);
+		running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
 	}
 	return running_sum;
 }
