@@ -34,17 +34,19 @@ long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION = 0.5;
-long double PARTICLE_RADIUS = 0.5;
+long double TIMESTEP_DURATION = 0.1;
+long double PARTICLE_RADIUS = 0.10;
+//long double H = 0.01;
 long double H = 1;
-long double MARCHING_CUBE_STEP_SIZE = 1;
+//long double MARCHING_CUBE_STEP_SIZE = .13131;
+long double MARCHING_CUBE_STEP_SIZE = 2;
 long double ISOVALUE_THRESHOLD = 0.5;
 
-long double WATER_MASS = 2;
-long double WATER_VICOSITY_COEFFICIENT = 1.0;
+long double WATER_MASS = 0.00020543;
+long double WATER_VICOSITY_COEFFICIENT = 0.2;
 long double WATER_BUOYANCY_STRENGTH = 0.0;
-long double WATER_GAS_CONSTANT = 1.0;
-long double WATER_REST_DENSITY = 2 * 1.56668;
+long double WATER_GAS_CONSTANT = 0.001;
+long double WATER_REST_DENSITY = 600.0;
 long double WATER_TEMP = 1.0;
 long double FOG_MASS = 1.0;
 long double FOG_VICOSITY_COEFFICIENT = 1.0;
@@ -302,7 +304,7 @@ void advanceOneTimestep() {
     Particle* particle = *it;
     vector<Particle*>* neighbors = new vector<Particle*>;
     getNeighbors(particle, &water_particle_grid, neighbors);
-    particle->set_density(*neighbors);
+    particle->set_density(neighbors);
     delete neighbors;
   }
 
@@ -312,7 +314,7 @@ void advanceOneTimestep() {
     vector<Particle*>* neighbors = new vector<Particle*>;
     getNeighbors(particle, &water_particle_grid, neighbors);
 
-    particle->set_acceleration(*neighbors);
+    particle->set_acceleration(neighbors);
     delete neighbors;
   }
 
@@ -335,13 +337,13 @@ void advanceOneTimestep() {
   //Calculate densities for this time step first
   for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
     Particle* particle = *it;
-    particle->set_density(fog_particles);
+    particle->set_density(&fog_particles);
   }
 
   //Calculate accelerations next
   for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
     Particle* particle = *it;
-    particle->set_acceleration(fog_particles);
+    particle->set_acceleration(&fog_particles);
   }
 
   //Then perform leapfrog!
@@ -504,11 +506,15 @@ void setColor(int color) {
   }
 }
 
-void marchingCubes(vector<Particle*> particles) {
-  vector<MarchingCube*>* cubes = MarchingCube::generateGrid(&particles, MARCHING_CUBE_STEP_SIZE);
+void marchingCubes(vector<Particle*>* particles) {
+  int counter = 0;
+  vector<MarchingCube*>* cubes = MarchingCube::generateGrid(particles, MARCHING_CUBE_STEP_SIZE);
   for (vector<MarchingCube*>::iterator it = cubes->begin(); it != cubes->end(); ++it) {
     MarchingCube* cube = *it;
-    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = cube->triangulate(&particles, ISOVALUE_THRESHOLD);
+    //char* buffer = new char[1000];
+    //sprintf(buffer, "%d/%d", ++counter, cubes->size());
+    //print(buffer);
+    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = cube->triangulate(particles, ISOVALUE_THRESHOLD);
     for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = triangles->begin(); it != triangles->end(); ++it) {
       vector<pair<ThreeDVector*, ThreeDVector*> > triangle = *it;
       glBegin(GL_POLYGON);                      // Draw A Polygon
@@ -609,12 +615,10 @@ void myDisplay() {
     }
   } else if (marching_cubes) {
     setColor(Water);
-    print("WHAT");
-    marchingCubes(water_particles);
-    print("SUP");
+    marchingCubes(&water_particles);
 
     setColor(Fog);
-    marchingCubes(fog_particles);
+    marchingCubes(&fog_particles);
   }
 
 
@@ -671,7 +675,7 @@ int main(int argc, char *argv[]) {
   //Parse Polygons the Golden Gate
   parseObj("Golden Gate Bridge.obj");
   setBounds();
-  
+  print("YAYYY");
   
   for (int x = -5; x < 5; x++) {
     for (int y = -5; y < 5; y++) {
@@ -682,6 +686,16 @@ int main(int argc, char *argv[]) {
       }
     }
   }
+
+  //Calculate densities for particles
+  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
+    Particle* particle = *it;
+    vector<Particle*>* neighbors = new vector<Particle*>;
+    getNeighbors(particle, &water_particle_grid, neighbors);
+    particle->set_density(neighbors);
+    delete neighbors;
+  }
+  print("QQ");
   
   /*
   Particle* water = Particle::createWaterParticle(1, 1 , 1);

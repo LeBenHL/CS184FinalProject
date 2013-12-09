@@ -1,6 +1,7 @@
 #ifndef THREEDVECTOR_H
 #define THREEDVECTOR_H
 #include <Eigen/Dense>
+using namespace std;
 
 class ThreeDVector{
 	public:
@@ -25,6 +26,7 @@ class ThreeDVector{
 		void transform_bang(Eigen::Matrix4f transformation, bool point);
 		char* repr();
 		char* print();
+		bool operator==(const ThreeDVector &other) const;
 };
 
 #endif

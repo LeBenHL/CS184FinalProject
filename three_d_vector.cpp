@@ -74,7 +74,10 @@ ThreeDVector* ThreeDVector::cross_product(ThreeDVector* v){
 }
 
 long double ThreeDVector::distance(ThreeDVector* v) {
-	return sqrt(pow(this->x - v->x, 2) + pow(this->y - v->y, 2) + pow(this->z - v->z, 2));
+	long double delta_x = this->x - v->x;
+	long double delta_y = this->y - v->y;
+	long double delta_z = this->z - v->z;
+	return sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z);
 }
 
 ThreeDVector* ThreeDVector::midpoint(ThreeDVector* v) {
@@ -109,4 +112,27 @@ char* ThreeDVector::print() {
 	char* buffer = new char[1000];
 	sprintf(buffer, "%0.2Lf %0.2Lf %0.2Lf", this->x, this->y, this->z);
 	return buffer;
+}
+
+
+//Override Hash and Equality Operations
+bool ThreeDVector::operator==(const ThreeDVector &other) const {
+	cout << "FUCK" << endl;
+	return this->x == other.x && this->y == other.y & this->z == other.z;    
+}
+
+namespace std
+{
+    template<>
+    struct hash<ThreeDVector>
+    {
+    public:
+        std::size_t operator()(ThreeDVector const& v) const 
+        {
+        	cout << "GAY" << endl;
+            return ((hash<long double>()(v.x)
+               ^ (hash<long double>()(v.y) << 1)) >> 1)
+               ^ (hash<long double>()(v.z) << 1);
+        }
+    };
 }

@@ -26,9 +26,9 @@ Particle::~Particle() {
 	delete this->acceleration;
 }
 
-void Particle::set_density(vector<Particle*> particles) {
+void Particle::set_density(vector<Particle*>* particles) {
 	long double running_sum = 0;
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
+	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
 		extern long double H;
 		running_sum += particle->mass * Particle::poly6Kernel(this->position->distance(particle->position), H);
@@ -39,7 +39,7 @@ void Particle::set_density(vector<Particle*> particles) {
 	this->density = running_sum;
 }
 
-void Particle::set_acceleration(vector<Particle*> particles) {
+void Particle::set_acceleration(vector<Particle*>* particles) {
 	//Assumes we have previously called set_density for all particles to have density values
 	//to use for this leapfrog step
 
@@ -105,9 +105,9 @@ void Particle::leapfrog_step(long double dt) {
 	delete v_dt;
 }
 
-ThreeDVector* Particle::viscosityForce(vector<Particle*> particles) {
+ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
 	ThreeDVector* running_sum = new ThreeDVector();
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
+	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
 		//TODO what is correct value of H?
 		ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
@@ -121,10 +121,10 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*> particles) {
 	return running_sum;
 }
 
-ThreeDVector* Particle::pressureForce(vector<Particle*> particles) {
+ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 	ThreeDVector* running_sum = new ThreeDVector();
 	ThreeDVector* my_pressure = this->pressure();
-	for (vector<Particle*>::iterator it = particles.begin(); it != particles.end(); ++it) {
+	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
 		//TODO what is correct value of H?
 		ThreeDVector* particle_pressure = particle->pressure();
@@ -193,6 +193,7 @@ long double Particle::colorAt(long double x, long double y, long double z, vecto
 }
 
 long double Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
+	
 	long double running_sum = 0;
 	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
@@ -248,3 +249,9 @@ long double Particle::spikyGradientKernel(long double r, long double h) {
 		return 0;
 	}
 }
+
+
+
+
+
+
