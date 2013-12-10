@@ -43,7 +43,7 @@ class Particle {
 		long double rest_density;
 		long double temperature;
 
-		unordered_map<array<long double, 3>, long double> color_map;
+		static unordered_map<array<long double, 3>, long double>* color_map;
 
 		//Interpolated Fields
 		long double density;

@@ -39,7 +39,7 @@ long double PARTICLE_RADIUS = 0.10;
 //long double H = 0.01;
 long double H = 1;
 //long double MARCHING_CUBE_STEP_SIZE = .13131;
-long double MARCHING_CUBE_STEP_SIZE = 2;
+long double MARCHING_CUBE_STEP_SIZE = 1;
 long double ISOVALUE_THRESHOLD = 0.5;
 
 long double WATER_MASS = 0.00020543;
@@ -675,7 +675,6 @@ int main(int argc, char *argv[]) {
   //Parse Polygons the Golden Gate
   parseObj("Golden Gate Bridge.obj");
   setBounds();
-  print("YAYYY");
   
   for (int x = -5; x < 5; x++) {
     for (int y = -5; y < 5; y++) {
@@ -695,7 +694,6 @@ int main(int argc, char *argv[]) {
     particle->set_density(neighbors);
     delete neighbors;
   }
-  print("QQ");
   
   /*
   Particle* water = Particle::createWaterParticle(1, 1 , 1);

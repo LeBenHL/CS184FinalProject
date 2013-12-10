@@ -193,14 +193,22 @@ long double Particle::colorAt(long double x, long double y, long double z, vecto
 }
 
 long double Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
-	
-	long double running_sum = 0;
-	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
-		Particle* particle = *it;
-		extern long double H;
-		running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
+	array<long double, 3> input = {position->x, position->y, position->z};
+	unordered_map<array<long double, 3>, long double>::const_iterator got = Particle::color_map->find(input);
+	if ( got == Particle::color_map->end() ) {
+		long double running_sum = 0;
+		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+			Particle* particle = *it;
+			extern long double H;
+			running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
+		}
+		Particle::color_map->insert(make_pair<array<long double, 3>, long double>(input, running_sum));
+		return running_sum;
+	} else {
+		cout << "YAY?" << endl;
+		cout << got->second << endl;
+		return got->second;
 	}
-	return running_sum;
 }
 
 Particle* Particle::createWaterParticle(long double x, long double y, long double z, ThreeDVector* velocity) {
@@ -249,6 +257,8 @@ long double Particle::spikyGradientKernel(long double r, long double h) {
 		return 0;
 	}
 }
+
+unordered_map<array<long double, 3>, long double>* Particle::color_map = new unordered_map<array<long double, 3>, long double>;
 
 
 
