@@ -193,8 +193,7 @@ long double Particle::colorAt(long double x, long double y, long double z, vecto
 }
 
 long double Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
-	array<long double, 3> input = {position->x, position->y, position->z};
-	unordered_map<array<long double, 3>, long double>::const_iterator got = Particle::color_map->find(input);
+	map<ThreeDVector*, long double>::const_iterator got = Particle::color_map->find(position);
 	if ( got == Particle::color_map->end() ) {
 		long double running_sum = 0;
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
@@ -202,11 +201,9 @@ long double Particle::colorAt(ThreeDVector* position, vector<Particle*>* particl
 			extern long double H;
 			running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
 		}
-		Particle::color_map->insert(make_pair<array<long double, 3>, long double>(input, running_sum));
+		Particle::color_map->insert(make_pair<ThreeDVector*, long double>(position->clone(), running_sum));
 		return running_sum;
 	} else {
-		cout << "YAY?" << endl;
-		cout << got->second << endl;
 		return got->second;
 	}
 }
@@ -258,7 +255,7 @@ long double Particle::spikyGradientKernel(long double r, long double h) {
 	}
 }
 
-unordered_map<array<long double, 3>, long double>* Particle::color_map = new unordered_map<array<long double, 3>, long double>;
+map<ThreeDVector*, long double, comparator>* Particle::color_map = new map<ThreeDVector*, long double, comparator>;
 
 
 

@@ -4,32 +4,22 @@
 
 #include <cmath>
 #include <vector>
-#include <unordered_map>
-#include <array>
+#include <map>
+#include <iostream>
 #include "three_d_vector.h"
 
 using namespace std;
 
-namespace std
-{
-    template<typename T, size_t N>
-    struct hash<array<T, N> >
-    {
-        typedef array<T, N> argument_type;
-        typedef size_t result_type;
-
-        result_type operator()(const argument_type& a) const
-        {
-            hash<T> hasher;
-            result_type h = 0;
-            for (result_type i = 0; i < N; ++i)
-            {
-                h = h * 31 + hasher(a[i]);
-            }
-            return h;
+class comparator {
+    public:
+        bool operator()(const ThreeDVector* lhs, const ThreeDVector* rhs) const {
+        	const ThreeDVector* left_v = (lhs);
+        	const ThreeDVector* right_v = (rhs);
+            return left_v->x < right_v->x
+                || ( left_v->x == right_v->x && ( left_v->y < right_v->y
+                || ( left_v->y == right_v->y && left_v->z < right_v->z)));
         }
-    };
-}
+};
 
 class Particle {
 	public:
@@ -43,7 +33,7 @@ class Particle {
 		long double rest_density;
 		long double temperature;
 
-		static unordered_map<array<long double, 3>, long double>* color_map;
+		static map<ThreeDVector*, long double, comparator>* color_map;
 
 		//Interpolated Fields
 		long double density;
