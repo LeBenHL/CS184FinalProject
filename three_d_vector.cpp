@@ -114,10 +114,9 @@ char* ThreeDVector::print() {
 	return buffer;
 }
 
-
+/*
 //Override Hash and Equality Operations
 bool ThreeDVector::operator==(const ThreeDVector &other) const {
-	cout << "FUCK" << endl;
 	return this->x == other.x && this->y == other.y & this->z == other.z;    
 }
 
@@ -129,10 +128,9 @@ namespace std
     public:
         std::size_t operator()(ThreeDVector const& v) const 
         {
-        	cout << "GAY" << endl;
             return ((hash<long double>()(v.x)
                ^ (hash<long double>()(v.y) << 1)) >> 1)
                ^ (hash<long double>()(v.z) << 1);
         }
     };
-}
+}*/

@@ -9,6 +9,7 @@ ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
 	int z = ceil((max_bounds->z - min_bounds->z)/H);
 
 	this->grid_size = new ThreeDVector(x, y, z);
+    this->neighbors_map = new map<ThreeDVector*, vector<Particle*>*, comparator>;
 
 	this->grid.resize(x);
 
@@ -26,6 +27,7 @@ ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
 ParticleGrid::~ParticleGrid() {
 	delete this->min_bounds;
 	delete this->grid_size;
+    delete this->neighbors_map;
 }
 
 bool ParticleGrid::withInGrid(int x, int y, int z) {
@@ -62,19 +64,35 @@ vector<Particle*>* ParticleGrid::getNeighbors(Particle* particle) {
 
 vector<Particle*>* ParticleGrid::getNeighbors(long double pos_x, long double pos_y, long double pos_z) {
     extern long double H;
-    vector<Particle*>* neighbors = new vector<Particle*>;
     int x = (pos_x - this->min_bounds->x) / H;  
     int y = (pos_y - this->min_bounds->y) / H; 
-    int z = (pos_z - this->min_bounds->z) / H; 
+    int z = (pos_z - this->min_bounds->z) / H;
 
-    for (int i = -1; i <= 1; i++) {
-        for (int j = -1; j <= 1; j++) {
-            for (int k = -1; k <= 1; k++) {
-                if (withInGrid(x+i, y+j, z+k)) {
-                  (*neighbors).insert((*neighbors).end(), (this->grid)[x+i][y+j][z+k]->begin(), (this->grid)[x+i][y+j][z+k]->end());
+    ThreeDVector* position = new ThreeDVector(x, y, z);
+    map<ThreeDVector*, vector<Particle*>*>::const_iterator got = this->neighbors_map->find(position);
+    if ( got == this->neighbors_map->end() ) { 
+        vector<Particle*>* neighbors = new vector<Particle*>;
+        for (int i = -1; i <= 1; i++) {
+            for (int j = -1; j <= 1; j++) {
+                for (int k = -1; k <= 1; k++) {
+                    if (withInGrid(x+i, y+j, z+k)) {
+                      (*neighbors).insert((*neighbors).end(), (this->grid)[x+i][y+j][z+k]->begin(), (this->grid)[x+i][y+j][z+k]->end());
+                    }
                 }
             }
         }
+        this->neighbors_map->insert(make_pair<ThreeDVector*, vector<Particle*>*>(position, neighbors));
+        return neighbors;
+    } else {
+        delete position;
+        return got->second;
     }
-    return neighbors;
+}
+
+void ParticleGrid::clearNeighborsMap() {
+    for(map<ThreeDVector*, vector<Particle*>*>::iterator it = this->neighbors_map->begin(); it != this->neighbors_map->end(); it++) {
+        delete it->first;
+        delete it->second;
+    }
+    this->neighbors_map->clear();
 }

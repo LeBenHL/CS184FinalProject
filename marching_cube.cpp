@@ -32,14 +32,14 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(
   color_values[6] =  Particle::colorAt(min_corner->x + this->size, min_corner->y + this->size, min_corner->z + this->size, n6);
   color_values[7] =  Particle::colorAt(min_corner->x, min_corner->y + this->size, min_corner->z + this->size, n7);
 
-  delete n0;
-  delete n1;
-  delete n2;
-  delete n3;
-  delete n4;
-  delete n5;
-  delete n6;
-  delete n7;
+  //delete n0;
+  //delete n1;
+  //delete n2;
+  //delete n3;
+  //delete n4;
+  //delete n5;
+  //delete n6;
+  //delete n7;
 
   //  Determine the index into the edge table which
   //  tells us which vertices are inside of the surface
@@ -140,21 +140,22 @@ pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, 
   n1 = particle_grid->getNeighbors(x+this->size, y, z);
   n2 = particle_grid->getNeighbors(x-this->size, y, z);
   long double normal_x =  (Particle::colorAt(x+this->size, y, z, n1) - Particle::colorAt(x-this->size, y, z, n2))/this->size;
-  delete n1;
-  delete n2;
+  //delete n1;
+  //delete n2;
 
   n1 = particle_grid->getNeighbors(x, y+this->size, z);
   n2 = particle_grid->getNeighbors(x, y-this->size, z);
   long double normal_y =  (Particle::colorAt(x, y+this->size, z, n1) - Particle::colorAt(x, y-this->size, z, n2))/this->size;
-  delete n1;
-  delete n2;
+  //delete n1;
+  //delete n2;
 
   n1 = particle_grid->getNeighbors(x, y, z+this->size);
   n2 = particle_grid->getNeighbors(x, y, z-this->size);
   long double normal_z =  (Particle::colorAt(x, y, z+this->size, n1) - Particle::colorAt(x, y, z-this->size, n2))/this->size;
   vertex_normal = new ThreeDVector(normal_x, normal_y, normal_z);
-  delete n1;
-  delete n2;
+  vertex_normal->normalize_bang();
+  //delete n1;
+  //delete n2;
 
   return make_pair(vertex, vertex_normal);
 }

@@ -3,6 +3,8 @@
 
 #include "particle.h"
 #include "three_d_vector.h"
+#include <map>
+#include <vector>
 
 using namespace std;
 
@@ -12,6 +14,7 @@ class ParticleGrid {
 		ThreeDVector* min_bounds;
 		ThreeDVector* grid_size;
 		vector<vector<vector<vector<Particle*>* > > > grid;
+		map<ThreeDVector*, vector<Particle*>*, comparator>* neighbors_map;
 
 		ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds);
 		~ParticleGrid();
@@ -21,6 +24,7 @@ class ParticleGrid {
 		vector<Particle*>* getNeighbors(Particle* particle);
 		vector<Particle*>* getNeighbors(long double pos_x, long double pos_y, long double pos_z);
 		void removeFromGrid(Particle* particle);
+		void clearNeighborsMap();
 
 };
 

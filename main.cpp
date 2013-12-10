@@ -35,12 +35,12 @@ long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION = 0.01;
+long double TIMESTEP_DURATION = 1;
 long double PARTICLE_RADIUS = 0.10;
 //long double H = 0.01;
 long double H = 1;
-//long double MARCHING_CUBE_STEP_SIZE = .13131;
-long double MARCHING_CUBE_STEP_SIZE = 2;
+long double MARCHING_CUBE_STEP_SIZE = .13131;
+//long double MARCHING_CUBE_STEP_SIZE = 2;
 long double ISOVALUE_THRESHOLD = 0.5;
 
 long double WATER_MASS = 0.00020543;
@@ -238,7 +238,7 @@ void advanceOneTimestep() {
     Particle* particle = *it;
     vector<Particle*>* neighbors = water_particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
-    delete neighbors;
+    //delete neighbors;
   }
 
   //Calculate accelerations next
@@ -246,7 +246,7 @@ void advanceOneTimestep() {
     Particle* particle = *it;
     vector<Particle*>* neighbors = water_particle_grid->getNeighbors(particle);
     particle->set_acceleration(neighbors);
-    delete neighbors;
+    //delete neighbors;
   }
 
   //Then perform leapfrog!
@@ -289,8 +289,11 @@ void advanceOneTimestep() {
     }
   }
 
-  //Also clear color map since that info is not valid anymore
+  //Also clear color map since that info is not valid anymore!
   Particle::clearColorMap();
+  //Clear Neighbors Maps as well!
+  water_particle_grid->clearNeighborsMap();
+  fog_particle_grid->clearNeighborsMap();
 
   ++num_timesteps;
 }
@@ -624,7 +627,7 @@ int main(int argc, char *argv[]) {
     Particle* particle = *it;
     vector<Particle*>* neighbors = water_particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
-    delete neighbors;
+    //delete neighbors;
   }
   
   /*

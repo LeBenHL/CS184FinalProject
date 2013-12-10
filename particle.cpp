@@ -256,6 +256,9 @@ long double Particle::spikyGradientKernel(long double r, long double h) {
 }
 
 void Particle::clearColorMap() {
+	for(map<ThreeDVector*, long double, comparator>::iterator it = Particle::color_map->begin(); it != Particle::color_map->end(); it++) {
+	    delete it->first;
+	}
 	Particle::color_map->clear();
 }
 

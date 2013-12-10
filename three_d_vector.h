@@ -29,4 +29,15 @@ class ThreeDVector{
 		bool operator==(const ThreeDVector &other) const;
 };
 
+class comparator {
+    public:
+        bool operator()(const ThreeDVector* lhs, const ThreeDVector* rhs) const {
+        	const ThreeDVector* left_v = (lhs);
+        	const ThreeDVector* right_v = (rhs);
+            return left_v->x < right_v->x
+                || ( left_v->x == right_v->x && ( left_v->y < right_v->y
+                || ( left_v->y == right_v->y && left_v->z < right_v->z)));
+        }
+};
+
 #endif
