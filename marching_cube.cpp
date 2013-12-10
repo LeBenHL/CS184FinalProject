@@ -201,11 +201,11 @@ ThreeDVector* MarchingCube::pointAt(int corner_index) {
 
 vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, long double step_size) {
   //Get Bounds of the particles
-  long double max_x = numeric_limits<long double>::min();
+  long double max_x = -numeric_limits<long double>::max();
   long double min_x = numeric_limits<long double>::max();
-  long double max_y = numeric_limits<long double>::min();
+  long double max_y = -numeric_limits<long double>::max();
   long double min_y = numeric_limits<long double>::max();
-  long double max_z = numeric_limits<long double>::min();
+  long double max_z = -numeric_limits<long double>::max();
   long double min_z = numeric_limits<long double>::max();
 
   for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
@@ -223,9 +223,9 @@ vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, 
   long double episilon = step_size/2;
   max_x += episilon; min_x -= episilon; max_y += episilon, min_y -= episilon; max_z += episilon, min_z -= episilon;
 
-  int num_steps_in_x = ceil(max_x - min_x / step_size);
-  int num_steps_in_y = ceil(max_y - min_y / step_size);
-  int num_steps_in_z = ceil(max_z - min_z / step_size);
+  int num_steps_in_x = ceil((max_x - min_x) / step_size);
+  int num_steps_in_y = ceil((max_y - min_y) / step_size);
+  int num_steps_in_z = ceil((max_z - min_z) / step_size);
 
   vector<MarchingCube*>* cubes = new vector<MarchingCube*>;
 
