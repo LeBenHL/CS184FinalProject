@@ -28,18 +28,19 @@
 #include "lodepng.h"
 #include "particle.h"
 #include "marching_cube.h"
+#include "particle_grid.h"
 
 //CONSTANTS
 long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION = 0.1;
+long double TIMESTEP_DURATION = 0.01;
 long double PARTICLE_RADIUS = 0.10;
 //long double H = 0.01;
 long double H = 1;
 //long double MARCHING_CUBE_STEP_SIZE = .13131;
-long double MARCHING_CUBE_STEP_SIZE = 1;
+long double MARCHING_CUBE_STEP_SIZE = 2;
 long double ISOVALUE_THRESHOLD = 0.5;
 
 long double WATER_MASS = 0.00020543;
@@ -93,17 +94,14 @@ long double max_z = numeric_limits<long double>::min();
 long double min_z = numeric_limits<long double>::max();
 
 //Bounding Box
-long double left_bound;
-long double right_bound;
-long double top_bound;
-long double bottom_bound;
-long double front_bound;
-long double back_bound;
+ThreeDVector* min_bounds;
+ThreeDVector* max_bounds;
+
+//Grids containing Particles
+ParticleGrid* water_particle_grid;
+ParticleGrid* fog_particle_grid;
 
 long double scale_factor = 1.0/25000.0;
-
-ThreeDVector* grid_size;
-vector<vector<vector<vector<Particle*>* > > > water_particle_grid;
 
 //Print Function for debugging
 void print(string _string) {
@@ -226,84 +224,19 @@ void setBounds() {
   long double transformed_max_z = (max_z - center_z) * scale_factor;
   long double transformed_min_z = (min_z - center_z) * scale_factor;
 
-  left_bound = transformed_min_x * 2;
-  right_bound = transformed_max_x * 2;
-  bottom_bound = transformed_min_y * 10;
-  top_bound = transformed_max_y * 10;
-  front_bound = transformed_max_z * 20;
-  back_bound = transformed_min_z * 20;
+  min_bounds = new ThreeDVector(transformed_min_x * 2, transformed_min_y * 10, transformed_min_z * 20);
+  max_bounds = new ThreeDVector(transformed_max_x * 2, transformed_max_y * 10, transformed_max_z * 20);
 
-  int x = ceil((right_bound - left_bound)/H);
-  int y = ceil((top_bound - bottom_bound)/H);
-  int z = ceil((front_bound - back_bound)/H);
+  water_particle_grid = new ParticleGrid(min_bounds, max_bounds);
+  fog_particle_grid = new ParticleGrid(min_bounds, max_bounds);
 
-  grid_size = new ThreeDVector(x, y, z);
-
-  water_particle_grid.resize(x);
-
-  for (int i = 0; i < x; i++) {
-    water_particle_grid[i].resize(y);
-    for (int j = 0; j < y; j++) {
-      water_particle_grid[i][j].resize(z);
-      for (int k = 0; k < z; k++) {
-        water_particle_grid[i][j][k] = new vector<Particle*>;
-      }
-    }
-  }
-
-}
-
-bool withInGrid(int x, int y, int z) {
-  return x >= 0 && x < grid_size->x && y >= 0 && y < grid_size->y && z >= 0 && z < grid_size->z;
-}
-
-void addToGrid(Particle* particle, vector<vector<vector<vector<Particle*>* > > > *grid) {
-  int x = (particle->position->x - left_bound) / H;  
-  int y = (particle->position->y - bottom_bound) / H; 
-  int z = (particle->position->z - back_bound) / H; 
-
-  if (withInGrid(x, y, z)) {
-    (*grid)[x][y][z]->push_back(particle);
-  } else {
-  }
-}
-
-void removeFromGrid(Particle* particle, vector<vector<vector<vector<Particle*>* > > > *grid) {
-  int x = (particle->position->x - left_bound) / H;  
-  int y = (particle->position->y - bottom_bound) / H; 
-  int z = (particle->position->z - back_bound) / H;
-
-  if (withInGrid(x, y, z)) {
-    vector<Particle*>* particles_cell =  (*grid)[x][y][z];
-    //print((int)particles_cell.size());
-    particles_cell->erase(remove(particles_cell->begin(), particles_cell->end(), particle), particles_cell->end());
-    //print((int)particles_cell.size());
-    //print("");
-  }
-}
-
-void getNeighbors(Particle* particle, vector<vector<vector<vector<Particle*>* > > > *grid, vector<Particle*> *neighbors) {
-  int x = (particle->position->x - left_bound) / H;  
-  int y = (particle->position->y - bottom_bound) / H; 
-  int z = (particle->position->z - back_bound) / H; 
-
-  for (int i = -1; i <= 1; i++) {
-    for (int j = -1; j <= 1; j++) {
-      for (int k = -1; k <= 1; k++) {
-        if (withInGrid(x+i, y+j, z+k)) {
-          (*neighbors).insert((*neighbors).end(), (*grid)[x+i][y+j][z+k]->begin(), (*grid)[x+i][y+j][z+k]->end());
-        }
-      }
-    }
-  }
 }
 
 void advanceOneTimestep() {
   //Calculate densities for this time step first
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
     Particle* particle = *it;
-    vector<Particle*>* neighbors = new vector<Particle*>;
-    getNeighbors(particle, &water_particle_grid, neighbors);
+    vector<Particle*>* neighbors = water_particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
     delete neighbors;
   }
@@ -311,9 +244,7 @@ void advanceOneTimestep() {
   //Calculate accelerations next
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
     Particle* particle = *it;
-    vector<Particle*>* neighbors = new vector<Particle*>;
-    getNeighbors(particle, &water_particle_grid, neighbors);
-
+    vector<Particle*>* neighbors = water_particle_grid->getNeighbors(particle);
     particle->set_acceleration(neighbors);
     delete neighbors;
   }
@@ -322,7 +253,7 @@ void advanceOneTimestep() {
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
     Particle* particle = *it;
 
-    removeFromGrid(particle, &water_particle_grid);
+    water_particle_grid->removeFromGrid(particle);
     //First Timestep
     if (num_timesteps == 0) {
       particle->leapfrog_start(TIMESTEP_DURATION);
@@ -330,9 +261,8 @@ void advanceOneTimestep() {
     } else {
       particle->leapfrog_step(TIMESTEP_DURATION);
     }
-    addToGrid(particle, &water_particle_grid);
+    water_particle_grid->addToGrid(particle);
   }
-
 
   //Calculate densities for this time step first
   for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
@@ -358,6 +288,9 @@ void advanceOneTimestep() {
       particle->leapfrog_step(TIMESTEP_DURATION);
     }
   }
+
+  //Also clear color map since that info is not valid anymore
+  Particle::clearColorMap();
 
   ++num_timesteps;
 }
@@ -514,7 +447,7 @@ void marchingCubes(vector<Particle*>* particles) {
     //char* buffer = new char[1000];
     //sprintf(buffer, "%d/%d", ++counter, cubes->size());
     //print(buffer);
-    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = cube->triangulate(particles, ISOVALUE_THRESHOLD);
+    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = cube->triangulate(water_particle_grid, ISOVALUE_THRESHOLD);
     for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = triangles->begin(); it != triangles->end(); ++it) {
       vector<pair<ThreeDVector*, ThreeDVector*> > triangle = *it;
       glBegin(GL_POLYGON);                      // Draw A Polygon
@@ -680,7 +613,7 @@ int main(int argc, char *argv[]) {
     for (int y = -5; y < 5; y++) {
       for (int z = -5; z < 5; z++) {
         Particle* water = Particle::createWaterParticle(x * 1, y * 1 , z * 1);
-        addToGrid(water, &water_particle_grid);
+        water_particle_grid->addToGrid(water);
         water_particles.push_back(water);
       }
     }
@@ -689,8 +622,7 @@ int main(int argc, char *argv[]) {
   //Calculate densities for particles
   for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
     Particle* particle = *it;
-    vector<Particle*>* neighbors = new vector<Particle*>;
-    getNeighbors(particle, &water_particle_grid, neighbors);
+    vector<Particle*>* neighbors = water_particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
     delete neighbors;
   }

@@ -77,6 +77,8 @@ class Particle {
 		//Spiky Kernel from http://www.matthiasmueller.info/publications/sca03.pdf
 		static long double spikyGradientKernel(long double r, long double h);
 
+		static void clearColorMap();
+
 };
 
 #endif

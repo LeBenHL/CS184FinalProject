@@ -1,4 +1,4 @@
-OBJS = main.o three_d_vector.o lodepng.o particle.o marching_cube.o
+OBJS = main.o three_d_vector.o lodepng.o particle.o marching_cube.o particle_grid.o
 CC = g++
 INCLUDE = -I ./ -g -pg
 FLAGS = -O3
@@ -25,8 +25,10 @@ lodepng.o: lodepng.h lodepng.cpp
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c lodepng.cpp -o lodepng.o
 particle.o: particle.h particle.cpp three_d_vector.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c particle.cpp -o particle.o
-marching_cube.o: marching_cube.h marching_cube.cpp three_d_vector.h particle.h
+marching_cube.o: marching_cube.h marching_cube.cpp three_d_vector.h particle.h particle_grid.h
 	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c marching_cube.cpp -o marching_cube.o
+particle_grid.o: particle_grid.h particle_grid.cpp three_d_vector.h particle.h
+	$(CC) $(CFLAGS) $(INCLUDE) $(FLAGS) -c particle_grid.cpp -o particle_grid.o
 clean: 
 	$(RM) *.o as1
  

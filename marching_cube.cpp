@@ -7,21 +7,39 @@ MarchingCube::MarchingCube(ThreeDVector* min_corner, long double size) {
 }
 
 MarchingCube::~MarchingCube() {
-  delete this->min_corner;
+  delete this->min_corner; 
 }
 
-vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(vector<Particle*>* particles, long double isovalue_threshold) {
+vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(ParticleGrid* particle_grid, long double isovalue_threshold) {
   vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = new vector<vector<pair<ThreeDVector*, ThreeDVector*> > >;
+  vector<Particle*> *n0, *n1, *n2, *n3, *n4, *n5, *n6, *n7;
+  n0 = particle_grid->getNeighbors(min_corner->x, min_corner->y, min_corner->z);
+  n1 = particle_grid->getNeighbors(min_corner->x + this->size, min_corner->y, min_corner->z);
+  n2 = particle_grid->getNeighbors(min_corner->x + this->size, min_corner->y, min_corner->z + this->size);
+  n3 = particle_grid->getNeighbors(min_corner->x, min_corner->y, min_corner->z + this->size);
+  n4 = particle_grid->getNeighbors(min_corner->x, min_corner->y + size, min_corner->z);
+  n5 = particle_grid->getNeighbors(min_corner->x + this->size, min_corner->y + this->size, min_corner->z);
+  n6 = particle_grid->getNeighbors(min_corner->x + this->size, min_corner->y + this->size, min_corner->z + this->size);
+  n7 = particle_grid->getNeighbors(min_corner->x, min_corner->y + this->size, min_corner->z + this->size);
 
   long double color_values[8];
-  color_values[0] =  Particle::colorAt(min_corner->x, min_corner->y, min_corner->z, particles);
-  color_values[1] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z, particles);
-  color_values[2] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z + this->size, particles);
-  color_values[3] =  Particle::colorAt(min_corner->x, min_corner->y, min_corner->z + this->size, particles);
-  color_values[4] =  Particle::colorAt(min_corner->x, min_corner->y + size, min_corner->z, particles);
-  color_values[5] =  Particle::colorAt(min_corner->x + this->size, min_corner->y + this->size, min_corner->z, particles);
-  color_values[6] =  Particle::colorAt(min_corner->x + this->size, min_corner->y + this->size, min_corner->z + this->size, particles);
-  color_values[7] =  Particle::colorAt(min_corner->x, min_corner->y + this->size, min_corner->z + this->size, particles);
+  color_values[0] =  Particle::colorAt(min_corner->x, min_corner->y, min_corner->z, n0);
+  color_values[1] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z, n1);
+  color_values[2] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z + this->size, n2);
+  color_values[3] =  Particle::colorAt(min_corner->x, min_corner->y, min_corner->z + this->size, n3);
+  color_values[4] =  Particle::colorAt(min_corner->x, min_corner->y + size, min_corner->z, n4);
+  color_values[5] =  Particle::colorAt(min_corner->x + this->size, min_corner->y + this->size, min_corner->z, n5);
+  color_values[6] =  Particle::colorAt(min_corner->x + this->size, min_corner->y + this->size, min_corner->z + this->size, n6);
+  color_values[7] =  Particle::colorAt(min_corner->x, min_corner->y + this->size, min_corner->z + this->size, n7);
+
+  delete n0;
+  delete n1;
+  delete n2;
+  delete n3;
+  delete n4;
+  delete n5;
+  delete n6;
+  delete n7;
 
   //  Determine the index into the edge table which
   //  tells us which vertices are inside of the surface
@@ -44,31 +62,31 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(
 
   // Find the vertices where the surface intersects the cube
   if (MarchingCube::edgeTable[cube_index] & 1) {
-    vertices[0] = this->interpolatePoint(0, 1, color_values[0], color_values[1], isovalue_threshold, particles);
+    vertices[0] = this->interpolatePoint(0, 1, color_values[0], color_values[1], isovalue_threshold, particle_grid);
   }
   if (MarchingCube::edgeTable[cube_index] & 2) {
-    vertices[1] = this->interpolatePoint(1, 2, color_values[1], color_values[2], isovalue_threshold, particles);
+    vertices[1] = this->interpolatePoint(1, 2, color_values[1], color_values[2], isovalue_threshold, particle_grid);
   }
   if (MarchingCube::edgeTable[cube_index] & 4)
-    vertices[2] = this->interpolatePoint(2, 3, color_values[2], color_values[3], isovalue_threshold, particles);
+    vertices[2] = this->interpolatePoint(2, 3, color_values[2], color_values[3], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 8)
-    vertices[3] = this->interpolatePoint(3, 0, color_values[3], color_values[0], isovalue_threshold, particles);
+    vertices[3] = this->interpolatePoint(3, 0, color_values[3], color_values[0], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 16)
-    vertices[4] = this->interpolatePoint(4, 5, color_values[4], color_values[5], isovalue_threshold, particles);
+    vertices[4] = this->interpolatePoint(4, 5, color_values[4], color_values[5], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 32)
-    vertices[5] = this->interpolatePoint(5, 6, color_values[5], color_values[6], isovalue_threshold, particles);
+    vertices[5] = this->interpolatePoint(5, 6, color_values[5], color_values[6], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 64)
-    vertices[6] = this->interpolatePoint(6, 7, color_values[6], color_values[7], isovalue_threshold, particles);
+    vertices[6] = this->interpolatePoint(6, 7, color_values[6], color_values[7], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 128)
-    vertices[7] = this->interpolatePoint(7, 4, color_values[7], color_values[4], isovalue_threshold, particles);
+    vertices[7] = this->interpolatePoint(7, 4, color_values[7], color_values[4], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 256)
-    vertices[8] = this->interpolatePoint(0, 4, color_values[0], color_values[4], isovalue_threshold, particles);
+    vertices[8] = this->interpolatePoint(0, 4, color_values[0], color_values[4], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 512)
-    vertices[9] = this->interpolatePoint(1, 5, color_values[1], color_values[5], isovalue_threshold, particles);
+    vertices[9] = this->interpolatePoint(1, 5, color_values[1], color_values[5], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 1024)
-    vertices[10] = this->interpolatePoint(2, 6, color_values[2], color_values[6], isovalue_threshold, particles);
+    vertices[10] = this->interpolatePoint(2, 6, color_values[2], color_values[6], isovalue_threshold, particle_grid);
   if (MarchingCube::edgeTable[cube_index] & 2048)
-    vertices[11] = this->interpolatePoint(3, 7, color_values[3], color_values[7], isovalue_threshold, particles);
+    vertices[11] = this->interpolatePoint(3, 7, color_values[3], color_values[7], isovalue_threshold, particle_grid);
 
    //Generate the Triangles
    for (int i = 0; MarchingCube::triTable[cube_index][i] != -1; i += 3) {
@@ -92,8 +110,9 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(
 }
 
 pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, int p2_index, long double color_p1, 
-      long double color_p2, long double isovalue_threshold, vector<Particle*>* particles) {
+      long double color_p2, long double isovalue_threshold, ParticleGrid* particle_grid) {
   long double x, y, z;
+  vector<Particle*> *n1, *n2;
   long double epsilon = 0.00001;
   ThreeDVector* vertex;
   ThreeDVector* vertex_normal;
@@ -118,11 +137,24 @@ pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, 
 
     vertex = new ThreeDVector(x, y, z);
   }
+  n1 = particle_grid->getNeighbors(x+this->size, y, z);
+  n2 = particle_grid->getNeighbors(x-this->size, y, z);
+  long double normal_x =  (Particle::colorAt(x+this->size, y, z, n1) - Particle::colorAt(x-this->size, y, z, n2))/this->size;
+  delete n1;
+  delete n2;
 
-  long double normal_x =  (Particle::colorAt(x+this->size, y, z, particles) - Particle::colorAt(x-this->size, y, z, particles))/this->size;
-  long double normal_y =  (Particle::colorAt(x, y+this->size, z, particles) - Particle::colorAt(x, y-this->size, z, particles))/this->size;
-  long double normal_z =  (Particle::colorAt(x, y, z+this->size, particles) - Particle::colorAt(x, y, z-this->size, particles))/this->size;
+  n1 = particle_grid->getNeighbors(x, y+this->size, z);
+  n2 = particle_grid->getNeighbors(x, y-this->size, z);
+  long double normal_y =  (Particle::colorAt(x, y+this->size, z, n1) - Particle::colorAt(x, y-this->size, z, n2))/this->size;
+  delete n1;
+  delete n2;
+
+  n1 = particle_grid->getNeighbors(x, y, z+this->size);
+  n2 = particle_grid->getNeighbors(x, y, z-this->size);
+  long double normal_z =  (Particle::colorAt(x, y, z+this->size, n1) - Particle::colorAt(x, y, z-this->size, n2))/this->size;
   vertex_normal = new ThreeDVector(normal_x, normal_y, normal_z);
+  delete n1;
+  delete n2;
 
   return make_pair(vertex, vertex_normal);
 }
