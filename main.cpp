@@ -35,7 +35,7 @@ long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION =  0.002;
+long double TIMESTEP_DURATION =  0.01;
 long double PARTICLE_RADIUS = 0.10;
 //long double H = 0.01;
 long double H = 0.02;
@@ -55,6 +55,7 @@ long double FOG_BUOYANCY_STRENGTH = 1.0;
 long double FOG_GAS_CONSTANT = 1.0;
 long double FOG_REST_DENSITY = 1.0;
 long double FOG_TEMP = 1.0;
+long double BOUNDARY_MASS = 0.001;
 
 //COLORS
 typedef enum {
@@ -72,6 +73,7 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > > polygons;
 //Our Particles. Should we combine our water/fog particles?
 vector<Particle*> fog_particles;
 vector<Particle*> water_particles;
+vector<Particle*> boundary_particles;
 
 //Save Boolean
 bool save = false;
@@ -223,8 +225,8 @@ void setBounds() {
   long double transformed_max_z = (max_z - center_z) * scale_factor;
   long double transformed_min_z = (min_z - center_z) * scale_factor;
 
-  min_bounds = new ThreeDVector(transformed_min_x * 2, transformed_min_y * 2, transformed_min_z * 2);
-  max_bounds = new ThreeDVector(transformed_max_x * 2, transformed_max_y * 2, transformed_max_z * 2);
+  min_bounds = new ThreeDVector(-3, -3, -3);
+  max_bounds = new ThreeDVector(3, 3, 3);
 
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
 }
@@ -321,7 +323,8 @@ void myReshape(int w, int h) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  long double radius = max(max_x - min_x, max(max_y - min_y, max_z - min_x)) / 2;
+  //long double radius = max(max_x - min_x, max(max_y - min_y, max_z - min_x)) / 2;
+  long double radius = 1;
 
   //glOrtho((center_x - radius) * multiplier, (center_x + radius) * multiplier, (center_y - radius) * multiplier, (center_y + radius) * multiplier, 1.0, 1.0 + radius);
   gluPerspective(90, float(w)/float(h), 1.0, 1.0 + radius * 10);
@@ -486,14 +489,14 @@ void myDisplay() {
   long double center_z = (max_z + min_z) / 2;
   //print((min_y - center_y) * scale_factor);
 
-  gluLookAt(-5, 0, 2.5, -4, 0, 0, 0, 1, 0);
-  //gluLookAt(0, 0, 5, 0, 0, 0, 0, 1, 0);
+  //gluLookAt(-5, 0, 2.5, -4, 0, 0, 0, 1, 0);
+  gluLookAt(0, 0, 5, 0, 0, -1, 0, 1, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   // Enable shading
   glShadeModel(GL_SMOOTH);
-
+  /*
   //BRIDGE
   setColor(Color_Golden_Gate_Orange);
   glPushMatrix();
@@ -526,8 +529,32 @@ void myDisplay() {
   glNormal3f(0, 1, 0);
   glVertex3f(10000, -35.0, -10000);
   glEnd();
-
   //FLUIDS
+
+  setColor(Color_Ground_Brown);
+  glBegin(GL_POLYGON);  
+  glNormal3f(0, 1, 0);
+  glVertex3f(-10000, -35.0, -10000);
+  glNormal3f(0, 1, 0);
+  glVertex3f(-10000, -35.0, 10000);
+  glNormal3f(0, 1, 0);
+  glVertex3f(10000, -35.0, 10000);
+  glNormal3f(0, 1, 0);
+  glVertex3f(10000, -35.0, -10000);
+  glEnd();  */
+
+  setColor(Color_Ground_Brown);
+  glBegin(GL_POLYGON);  
+  glNormal3f(0, 1, 0);
+  glVertex3f(-3, -3, -3);
+  glNormal3f(0, 1, 0);
+  glVertex3f(-3, -3, 3);
+  glNormal3f(0, 1, 0);
+  glVertex3f(3, -3, 3);
+  glNormal3f(0, 1, 0);
+  glVertex3f(3, -3, -3);
+  glEnd();
+
   if (spheres) {
     setColor(Water);
     for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
@@ -540,6 +567,14 @@ void myDisplay() {
 
     setColor(Fog);
     for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+      Particle* particle = *it;
+      glPushMatrix();
+      glTranslatef(particle->position->x, particle->position->y, particle->position->z);
+      glutSolidSphere(PARTICLE_RADIUS, 100, 100);
+      glPopMatrix();
+    }
+    setColor(Color_Ground_Brown);
+    for (vector<Particle*>::iterator it = boundary_particles.begin(); it != boundary_particles.end(); it++) {
       Particle* particle = *it;
       glPushMatrix();
       glTranslatef(particle->position->x, particle->position->y, particle->position->z);
@@ -606,16 +641,24 @@ int main(int argc, char *argv[]) {
   }
 
   //Parse Polygons the Golden Gate
-  parseObj("Golden Gate Bridge.obj");
+  //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -5; x < 5; x++) {
-    for (int y = -5; y < 5; y++) {
-      for (int z = -5; z < 5; z++) {
+  for (int x = -5; x <5; x++) {
+    for (int y = -5; y <5; y++) {
+      for (int z = -5; z <5; z++) {
         Particle* water = Particle::createWaterParticle(x * .2, y * .2 , z * .2);
         particle_grid->addToGrid(water);
         water_particles.push_back(water);
       }
+    }
+  }
+
+  for (int x = -5; x <6; x++) {
+    for (int z = -5; z <5; z++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .5, -3, z * .5);
+      particle_grid->addToGrid(boundary);
+      boundary_particles.push_back(boundary);
     }
   }
 
