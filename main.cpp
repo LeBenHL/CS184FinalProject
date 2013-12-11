@@ -211,6 +211,9 @@ void parseObj(const char* filename) {
   vertices.clear();
 }
 
+
+//old setBounds
+/*
 void setBounds() {
   long double center_x = (max_x + min_x) / 2;
   long double center_y = (max_y + min_y) / 2;
@@ -227,6 +230,15 @@ void setBounds() {
   max_bounds = new ThreeDVector(transformed_max_x * 2, transformed_max_y * 2, transformed_max_z * 2);
 
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
+}
+*/
+
+void setBounds() {
+  min_bounds = new ThreeDVector(-5.0, -5.0, -5.0);
+  max_bounds = new ThreeDVector(5.0, 5.0, 5.0);
+  
+  water_particle_grid = new ParticleGrid(min_bounds, max_bounds);
+  fog_particle_grid = new ParticleGrid(min_bounds, max_bounds);
 }
 
 void advanceOneTimestep() {
@@ -321,10 +333,8 @@ void myReshape(int w, int h) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  long double radius = max(max_x - min_x, max(max_y - min_y, max_z - min_x)) / 2;
-
   //glOrtho((center_x - radius) * multiplier, (center_x + radius) * multiplier, (center_y - radius) * multiplier, (center_y + radius) * multiplier, 1.0, 1.0 + radius);
-  gluPerspective(90, float(w)/float(h), 1.0, 1.0 + radius * 10);
+  gluPerspective(90, float(w)/float(h), 1.0, 11.0);
   glViewport (0,0,viewport.w,viewport.h);
 
 }
@@ -606,7 +616,7 @@ int main(int argc, char *argv[]) {
   }
 
   //Parse Polygons the Golden Gate
-  parseObj("Golden Gate Bridge.obj");
+  //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
   for (int x = -5; x < 5; x++) {
