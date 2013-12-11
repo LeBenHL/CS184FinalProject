@@ -1,9 +1,56 @@
 #include <cmath>
-
 #include "particle.h"
 #include <iostream>
+#include <unordered_map>
 
 using namespace std;
+
+//CONSTANTS
+long double p_1 = 16769023.0;
+long double p_2 = 83492791.0;
+long double p_3 = 73856093.0;
+
+//hash function
+
+//prime multiplication method
+/*unsigned long int hash_simple(ThreeDVector point, ) {
+  long double x = point->x * p_1;
+  long double y = point->y * p_2;
+  long double z = point->z * p_3;
+
+  return (unsigned long int) (x ^ y ^ z);
+}
+*/
+
+struct Key {
+  ThreeDVector* point;
+
+  bool operator==(const Key &other) const {
+    return (point->x == other.point->x && point->y == other.point->y && point->z == other.point->z);
+  }
+
+};
+
+namespace std {
+  template <>
+  struct hash<Key> {
+  public:
+    std::size_t operator()(Key const* k) const {
+      using std::size_t;
+      using std::hash;
+
+      long double x = k->point->x * p_1;
+      long double y = k->point->y * p_2;
+      long double z = k->point->z * p_3;
+
+      std::size_t h1 = std::hash<std::long double>()(x);
+      std::size_t h2 = std::hash<std::long double>()(y);
+      std::size_t h3 = std::hash<std::long double>()(z);
+
+      return h1 ^ h2 ^ h3; 
+    }
+  };
+}
 
 Particle::Particle(long double x, long double y, long double z, long double mass, 
 		ThreeDVector* velocity, long double viscosity_coefficient, long double buoyancy_strength, 
