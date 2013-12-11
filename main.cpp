@@ -210,7 +210,7 @@ void parseObj(const char* filename) {
 
 
 //old setBounds
-/*
+
 void setBounds() {
   long double center_x = (max_x + min_x) / 2;
   long double center_y = (max_y + min_y) / 2;
@@ -228,14 +228,15 @@ void setBounds() {
 
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
 }
-*/
 
+/*
 void setBounds() {
   min_bounds = new ThreeDVector(-5.0, -5.0, -5.0);
   max_bounds = new ThreeDVector(5.0, 5.0, 5.0);
   
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
 }
+*/
 
 void advanceOneTimestep() {
   //Calculate densities for this time step first
