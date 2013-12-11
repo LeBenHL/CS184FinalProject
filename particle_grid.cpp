@@ -1,4 +1,5 @@
 #include "particle_grid.h"
+#include <iostream>
 
 ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
 	extern long double H;
@@ -95,4 +96,9 @@ void ParticleGrid::clearNeighborsMap() {
         delete it->second;
     }
     this->neighbors_map->clear();
+}
+
+ThreeDVector* ParticleGrid::minCornerOfCell(int x, int y, int z) {
+	extern long double H;
+	return new ThreeDVector(x * H + this->min_bounds->x, y * H + this->min_bounds->y, z * H + this->min_bounds->z);
 }
