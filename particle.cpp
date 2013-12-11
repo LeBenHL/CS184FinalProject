@@ -135,6 +135,7 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 		gradient->scalar_multiply_bang(average_pressure);
 		running_sum->vector_add_bang(gradient);
 		delete r_hat;
+		delete gradient;
 	}
 
 	running_sum->scalar_multiply_bang(-1);
@@ -223,7 +224,7 @@ long double Particle::colorAt(ThreeDVector* position, vector<Particle*>* particl
 			Particle* particle = *it;
 			running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
 		}
-		Particle::color_map->insert(make_pair<ThreeDVector*, long double>(position->clone(), running_sum));
+		Particle::color_map->insert(pair<ThreeDVector*, long double>(position->clone(), running_sum));
 		return running_sum;
 	} else {
 		return got->second;

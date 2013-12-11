@@ -82,7 +82,7 @@ vector<Particle*>* ParticleGrid::getNeighbors(long double pos_x, long double pos
                 }
             }
         }
-        this->neighbors_map->insert(make_pair<ThreeDVector*, vector<Particle*>*>(position, neighbors));
+        this->neighbors_map->insert(pair<ThreeDVector*, vector<Particle*>*>(position, neighbors));
         return neighbors;
     } else {
         delete position;
