@@ -241,6 +241,42 @@ vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, 
   return cubes;
 }
 
+/*
+vector<MarchingCube*>* MarchingCube::generateGridFast(ParticleGrid* particle_grid, long double step_size) {
+  //Iterate through all grid cells
+  extern long double H;
+  vector<MarchingCube*>* cubes = new vector<MarchingCube*>;
+  for (int x = 0; x < particle_grid->grid_size->x; x++) {
+    for (int y = 0; y < particle_grid->grid_size->y; y++) {
+      for (int z = 0; z < particle_grid->grid_size->z; z++) {
+        vector<Particle*>* particles = particle_grid->grid[x][y][z];
+        for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); it++) {
+          Particle* particle = *it;
+          //If Grid Cell contains a surface particle, then we want to generate Marching cubes along this cell
+          if (particle->isSurfaceParticle(particle_grid->getNeighbors(particle))) {
+            //Find Min and Max Corners of this Grid Cell in World Space
+            ThreeDVector* min_corner = particle_grid->minCornerOfCell(x, y, z);
+
+            int num_steps = ceil(H / step_size);
+            for (int i = 0; i < num_steps; i++) {
+              for (int j = 0; j < num_steps; j++) {
+                for (int k = 0; k < num_steps; k++) {
+                  ThreeDVector* min_corner = new ThreeDVector(i * step_size + min_corner->x, j * step_size + min_corner->y, k * step_size + min_corner->z);
+                  cubes->push_back(new MarchingCube(min_corner, step_size));
+                }
+              }
+            }
+
+            delete min_corner;
+            break;
+          }
+        }
+      }
+    }
+  }
+  return cubes;
+}*/
+
 const int MarchingCube::MarchingCube::edgeTable[256]={
       0x0  , 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c,
       0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,

@@ -22,6 +22,7 @@ class MarchingCube {
 		ThreeDVector* pointAt(int corner_index);
 
 		static vector<MarchingCube*>* generateGrid(vector<Particle*>* particles, long double step_size);
+		//static vector<MarchingCube*>* generateGridFast(ParticleGrid* particle_grid, long double step_size);
 
 		static const int edgeTable[256];
 		static const int triTable[256][16];

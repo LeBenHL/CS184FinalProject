@@ -25,6 +25,7 @@ class ParticleGrid {
 		vector<Particle*>* getNeighbors(long double pos_x, long double pos_y, long double pos_z);
 		void removeFromGrid(Particle* particle);
 		void clearNeighborsMap();
+		ThreeDVector* minCornerOfCell(int x, int y, int z);
 
 };
 

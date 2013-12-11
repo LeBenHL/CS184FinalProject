@@ -42,13 +42,16 @@ class Particle {
 		
 		ThreeDVector* viscosityForce(vector<Particle*>* particles);
 		ThreeDVector* pressureForce(vector<Particle*>* particles);
-		ThreeDVector* pressure();
+		long double pressure();
 		ThreeDVector* externalForce();
 		ThreeDVector* gravity();
 		ThreeDVector* wind();
 		ThreeDVector* buoyancy();
 
+		//bool isSurfaceParticle(vector<Particle*>* particles);
+
 		long double color(vector<Particle*>* particles);
+		//long double colorGradient(vector<Particle*>* particles);
 
 		static long double colorAt(ThreeDVector* position, vector<Particle*>* particles);
 		static long double colorAt(long double x, long double y, long double z, vector<Particle*>* particles);
@@ -64,7 +67,7 @@ class Particle {
 		static long double viscosityGradientSquaredKernel(long double r, long double h);
 
 		//Spiky Kernel from http://www.matthiasmueller.info/publications/sca03.pdf
-		static long double spikyGradientKernel(long double r, long double h);
+		static ThreeDVector* spikyGradientKernel(ThreeDVector* r_hat, long double h);
 
 		static void clearColorMap();
 

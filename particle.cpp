@@ -27,10 +27,10 @@ Particle::~Particle() {
 }
 
 void Particle::set_density(vector<Particle*>* particles) {
+	extern long double H;
 	long double running_sum = 0;
 	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
-		extern long double H;
 		running_sum += particle->mass * Particle::poly6Kernel(this->position->distance(particle->position), H);
 	}
 	//TODO Save density?
@@ -106,13 +106,13 @@ void Particle::leapfrog_step(long double dt) {
 }
 
 ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
+	extern long double H;
 	ThreeDVector* running_sum = new ThreeDVector();
 	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
 		//TODO what is correct value of H?
 		ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
 		velocity_difference->scalar_multiply_bang(particle->mass / particle->density);
-		extern long double H;
 		velocity_difference->scalar_multiply_bang(Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), H));
 		running_sum->vector_add_bang(velocity_difference);
 		delete velocity_difference;
@@ -122,22 +122,20 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
 }
 
 ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
+	extern long double H;
 	ThreeDVector* running_sum = new ThreeDVector();
-	ThreeDVector* my_pressure = this->pressure();
+	long double my_pressure = this->pressure();
 	for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 		Particle* particle = *it;
 		//TODO what is correct value of H?
-		ThreeDVector* particle_pressure = particle->pressure();
-		ThreeDVector* average_pressure = particle_pressure->vector_add(my_pressure);
-		average_pressure->scalar_multiply_bang(0.5);
-		average_pressure->scalar_multiply_bang(particle->mass / particle->density);
-		extern long double H;
-		average_pressure->scalar_multiply_bang(Particle::spikyGradientKernel(this->position->distance(particle->position), H));
-		running_sum->vector_add_bang(average_pressure);
-		delete particle_pressure;
-		delete average_pressure;
+		long double particle_pressure = particle->pressure();
+		long double average_pressure = (particle_pressure + average_pressure) * 0.5 * (particle->mass / particle->density);
+		ThreeDVector* r_hat = this->position->vector_subtract(particle->position);
+		ThreeDVector* gradient = Particle::spikyGradientKernel(r_hat, H);
+		gradient->scalar_multiply_bang(average_pressure);
+		running_sum->vector_add_bang(gradient);
+		delete r_hat;
 	}
-	delete my_pressure;
 
 	running_sum->scalar_multiply_bang(-1);
 	return running_sum;
@@ -166,13 +164,13 @@ ThreeDVector* Particle::gravity() {
 }
 
 ThreeDVector* Particle::wind() {
-	return new ThreeDVector(0, 0, 0);
+	return new ThreeDVector(5, 0, 5);
 }
 
-ThreeDVector* Particle::pressure() {
+long double Particle::pressure() {
 	//Assume Pressure is same in all directions?
 	long double pressure = this->gas_constant * (pow(this->density / this->rest_density, 7) - 1);
-	return new ThreeDVector(pressure, pressure, pressure);
+	return pressure;
 }
 
 ThreeDVector* Particle::buoyancy() {
@@ -181,9 +179,33 @@ ThreeDVector* Particle::buoyancy() {
 	return CONSTANT_OF_GRAVITY->scalar_multiply(-this->buoyancy_strength * (this->temperature - AMBIENT_TEMP));
 }
 
+/*
+bool Particle::isSurfaceParticle(vector<Particle*>* particles) {
+	long double delta = 0.05;
+	long double color = this->colorGradient(particles);
+	cout << color << endl;
+	return (color > (0.5 - delta)) && (color < (0.5 + delta));
+}*/
+
 long double Particle::color(vector<Particle*>* particles) {
 	return Particle::colorAt(this->position, particles);
 }
+
+/*
+long double Particle::colorGradient(vector<Particle*>* particles) {
+	long double step_size = 0.1;
+	long double x = this->position->x;
+	long double y = this->position->y;
+	long double z = this->position->z;
+
+	long double graident_x = (this->colorAt(x + step_size, y, z, particles) - this->colorAt(x - step_size, y, z, particles)) / step_size;
+	long double graident_y = (this->colorAt(x, y + step_size, z, particles) - this->colorAt(x - step_size, y - step_size, z, particles)) / step_size;
+	long double graident_z = (this->colorAt(x, y, z + step_size, particles) - this->colorAt(x - step_size, y, z - step_size, particles)) / step_size;
+	ThreeDVector* gradient_vec = new ThreeDVector(graident_x, graident_y, graident_z);
+	long double magnitude = gradient_vec->magnitude();
+	delete gradient_vec;
+	return magnitude;
+}*/
 
 long double Particle::colorAt(long double x, long double y, long double z, vector<Particle*>* particles) {
 	ThreeDVector* position = new ThreeDVector(x, y, z);
@@ -193,12 +215,12 @@ long double Particle::colorAt(long double x, long double y, long double z, vecto
 }
 
 long double Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
+	extern long double H;
 	map<ThreeDVector*, long double>::const_iterator got = Particle::color_map->find(position);
 	if ( got == Particle::color_map->end() ) {
 		long double running_sum = 0;
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
-			extern long double H;
 			running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
 		}
 		Particle::color_map->insert(make_pair<ThreeDVector*, long double>(position->clone(), running_sum));
@@ -246,12 +268,13 @@ long double Particle::viscosityGradientSquaredKernel(long double r, long double 
 	}
 }
 
-long double Particle::spikyGradientKernel(long double r, long double h) {
+ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r_hat, long double h) {
+	long double r = r_hat->magnitude();
 	if (r >= 0 && r <= h) {
 		extern long double PI;
-		return -((45 * pow(h - r, 2)) / (PI * pow(h, 6)));
+		return r_hat->scalar_multiply(-((45 * pow(h - r, 2)) / (PI * pow(h, 6))));
 	} else {
-		return 0;
+		return new ThreeDVector();
 	}
 }
 
