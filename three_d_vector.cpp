@@ -21,7 +21,11 @@ long double ThreeDVector::magnitude(){
 ThreeDVector* ThreeDVector::normalize(){
 	//cout << "BEFORE: " << this->x << ", " << this->y << ", " << this->z << endl;
 	long double mag = magnitude();
-	return new ThreeDVector(this->x / mag, this->y / mag, this->z / mag);
+	if (mag == 0) {
+		return new ThreeDVector();
+	} else {
+		return new ThreeDVector(this->x / mag, this->y / mag, this->z / mag);
+	}
 	//cout << "AFTER: " << this->x << ", " << this->y << ", " << this->z << endl;
 }
 

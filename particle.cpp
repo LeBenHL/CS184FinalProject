@@ -40,7 +40,7 @@ void Particle::set_density(vector<Particle*>* particles) {
 	}
 	//TODO Save density?
 
-	//cout << running_sum << endl;
+	cout << running_sum << endl;
 	this->density = running_sum;
 }
 
@@ -60,6 +60,12 @@ void Particle::set_acceleration(vector<Particle*>* particles) {
 		net_force->vector_add_bang(pressure_force);
 		net_force->vector_add_bang(viscosity_force);
 		net_force->vector_add_bang(boundary_force);
+
+		//cout << external_force->repr() << endl;
+		//cout << pressure_force->repr() << endl;
+		//cout << viscosity_force->repr() << endl;
+		//cout << boundary_force->repr() << endl;
+		//cout << net_force->repr() << endl << endl;
 
 		delete external_force;
 		delete pressure_force;
@@ -122,7 +128,7 @@ void Particle::leapfrog_step(long double dt) {
 ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
 	extern long double H;
 	ThreeDVector* running_sum = new ThreeDVector();
-	if(this->type != Particle_Boundary){
+	if (this->type != Particle_Boundary){
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
 			if(this->type == particle->type){
@@ -149,12 +155,13 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 			if(this->type == particle->type){
 				//TODO what is correct value of H?
 				long double particle_pressure = particle->pressure();
-				long double average_pressure = (particle_pressure + average_pressure) * 0.5 * (particle->mass / particle->density);
-				ThreeDVector* r_hat = this->position->vector_subtract(particle->position);
-				ThreeDVector* gradient = Particle::spikyGradientKernel(r_hat, H);
+				long double average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
+				ThreeDVector* r = this->position->vector_subtract(particle->position);
+				ThreeDVector* gradient = Particle::spikyGradientKernel(r, H);
 				gradient->scalar_multiply_bang(average_pressure);
 				running_sum->vector_add_bang(gradient);
-				delete r_hat;
+				delete r;
+				delete gradient;
 			}
 		}
 		running_sum->scalar_multiply_bang(-1);
@@ -163,14 +170,14 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 }
 
 long double parametric_calculation(long double q){
-	if (q > 0 || q < 2/3){
-		return 2/3;
-	}else if (q > 2/3 || q < 1){
-		return 2*q - 3/2*pow(q, 2);
-	}else if(q > 1 || q < 2){
-		return (1/2)*pow(2-q, 2);
+	if (q > 0.0 && q < 2.0/3.0){
+		return 2.0/3.0;
+	}else if (q > 2.0/3.0 && q < 1.0){
+		return 2.0*q - (3.0/2.0)*pow(q, 2.0);
+	}else if(q > 1.0 && q < 2.0){
+		return (1.0/2.0)*pow(2.0-q, 2.0);
 	}else{
-		return 0;
+		return 0.0;
 	}
 }
 
@@ -190,16 +197,22 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 
 				long double q = mag_xa_minus_xk / H;
 				
-				long double c2 = (WATER_GAS_CONSTANT*7)/this->density;
+				long double c2 = 100;
 
 				long double gamma = (0.02*c2)/mag_xa_minus_xk;
 				gamma *= parametric_calculation(q);
 
-				long double constant_factor = ((mass_k/(mass_a + mass_k)) * gamma) / mag_xa_minus_xk;
+				long double constant_factor = ((mass_k/(mass_a + mass_k)) * gamma * this->density) / mag_xa_minus_xk;
 
 				ThreeDVector* f_force = xa_minus_xk->scalar_multiply(constant_factor);
 				running_sum->vector_add_bang(f_force);
-				
+				//cout << c2 << endl;
+				//cout << (mass_k/(mass_a + mass_k)) << endl;
+				//cout << gamma << endl;
+				//cout << mag_xa_minus_xk << endl;
+				//cout << xa_minus_xk->repr() << endl;
+				//cout << f_force->repr() << endl; 
+
 				delete f_force;
 				delete xa_minus_xk;
 			}
@@ -231,12 +244,13 @@ ThreeDVector* Particle::gravity() {
 }
 
 ThreeDVector* Particle::wind() {
-	return new ThreeDVector(5, 0, 5);
+	return new ThreeDVector(0, 0, 0);
 }
 
 long double Particle::pressure() {
 	//Assume Pressure is same in all directions?
 	long double pressure = this->gas_constant * (pow(this->density / this->rest_density, 7) - 1);
+	//cout << this->density / this->rest_density << endl;
 	return pressure;
 }
 
@@ -319,7 +333,7 @@ Particle* Particle::createFogParticle(long double x, long double y, long double 
 
 Particle* Particle::createBoundaryParticle(long double x, long double y, long double z, ThreeDVector* velocity) {
 	extern long double BOUNDARY_MASS;
-	return new Particle(x, y, z, BOUNDARY_MASS, 0, 0, 0, 0, 0, 0, Particle_Fog);
+	return new Particle(x, y, z, BOUNDARY_MASS, velocity, 0, 0, 0, 0, 0, Particle_Boundary);
 }
 
 long double Particle::poly6Kernel(long double r, long double h) {
@@ -340,11 +354,13 @@ long double Particle::viscosityGradientSquaredKernel(long double r, long double 
 	}
 }
 
-ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r_hat, long double h) {
-	long double r = r_hat->magnitude();
-	if (r >= 0 && r <= h) {
+ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, long double h) {
+	long double r_mag = r->magnitude();
+	if (r_mag >= 0 && r_mag <= h) {
 		extern long double PI;
-		return r_hat->scalar_multiply(-((45 * pow(h - r, 2)) / (PI * pow(h, 6))));
+		ThreeDVector* r_normal = r->normalize();
+		r_normal->scalar_multiply_bang(-((45 * pow(h - r_mag, 2)) / (PI * pow(h, 6))));
+		return r_normal;
 	} else {
 		return new ThreeDVector();
 	}

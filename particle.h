@@ -10,6 +10,12 @@
 
 using namespace std;
 
+typedef enum {
+  Particle_Water,
+  Particle_Fog,
+  Particle_Boundary
+}Particle_Type;
+
 class Particle {
 	public:
 		ThreeDVector* position;
@@ -21,12 +27,6 @@ class Particle {
 		long double buoyancy_strength;
 		long double rest_density;
 		long double temperature;
-
-		typedef enum {
-		  Particle_Water,
-		  Particle_Fog,
-		  Particle_Boundary
-		}Particle_Type;
 
 		 Particle_Type type;
 

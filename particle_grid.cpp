@@ -2,33 +2,39 @@
 #include <iostream>
 
 ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
-	extern long double H;
-	this->min_bounds = min_bounds;
+    extern long double H;
+    this->min_bounds = min_bounds;
 
-	int x = ceil((max_bounds->x - min_bounds->x)/H);
-	int y = ceil((max_bounds->y - min_bounds->y)/H);
-	int z = ceil((max_bounds->z - min_bounds->z)/H);
+    int x = ceil((max_bounds->x - min_bounds->x)/H);
+    int y = ceil((max_bounds->y - min_bounds->y)/H);
+    int z = ceil((max_bounds->z - min_bounds->z)/H);
 
-	this->grid_size = new ThreeDVector(x, y, z);
+    this->grid_size = new ThreeDVector(x, y, z);
     this->neighbors_map = new map<ThreeDVector*, vector<Particle*>*, comparator>;
+    this->water_particles = new vector<Particle*>;
+    this->fog_particles = new vector<Particle*>;
+    this->boundary_particles = new vector<Particle*>;
 
-	this->grid.resize(x);
+    this->grid.resize(x);
 
-	for (int i = 0; i < x; i++) {
-		this->grid[i].resize(y);
-		for (int j = 0; j < y; j++) {
-		  	this->grid[i][j].resize(z);
-		  	for (int k = 0; k < z; k++) {
-		    	this->grid[i][j][k] = new vector<Particle*>;
-		  	}
-		}
-	}
+    for (int i = 0; i < x; i++) {
+        this->grid[i].resize(y);
+        for (int j = 0; j < y; j++) {
+            this->grid[i][j].resize(z);
+            for (int k = 0; k < z; k++) {
+                this->grid[i][j][k] = new vector<Particle*>;
+            }
+        }
+    }
 }
 
 ParticleGrid::~ParticleGrid() {
-	delete this->min_bounds;
-	delete this->grid_size;
+    delete this->min_bounds;
+    delete this->grid_size;
     delete this->neighbors_map;
+    delete this->water_particles;
+    delete this->fog_particles;
+    delete this->boundary_particles;
 }
 
 bool ParticleGrid::withInGrid(int x, int y, int z) {
@@ -36,27 +42,72 @@ bool ParticleGrid::withInGrid(int x, int y, int z) {
 }
 
 void ParticleGrid::addToGrid(Particle* particle) {
-	extern long double H;
-	int x = (particle->position->x - this->min_bounds->x) / H;  
-	int y = (particle->position->y - this->min_bounds->y) / H; 
-	int z = (particle->position->z - this->min_bounds->z) / H; 
-
-	if (withInGrid(x, y, z)) {
-	   (this->grid)[x][y][z]->push_back(particle);
-	} else {
-	}
+    switch (particle->type) {
+        case Particle_Water: {
+            this->water_particles->push_back(particle);
+            break;
+        }
+        case Particle_Fog: {
+            this->fog_particles->push_back(particle);
+            break;
+        }
+        case Particle_Boundary: {
+            this->boundary_particles->push_back(particle);
+            break;
+        }
+    }
+    this->registerGridPos(particle);
 }
 
-void ParticleGrid::removeFromGrid(Particle* particle) {
-	extern long double H;
-	int x = (particle->position->x - this->min_bounds->x) / H;  
-	int y = (particle->position->y - this->min_bounds->y) / H; 
-	int z = (particle->position->z - this->min_bounds->z) / H;
+bool ParticleGrid::registerGridPos(Particle* particle) {
+    extern long double H;
+    int x = (particle->position->x - this->min_bounds->x) / H;  
+    int y = (particle->position->y - this->min_bounds->y) / H; 
+    int z = (particle->position->z - this->min_bounds->z) / H; 
 
-	if (withInGrid(x, y, z)) {
-    	vector<Particle*>* particles_cell =  (this->grid)[x][y][z];
-    	particles_cell->erase(remove(particles_cell->begin(), particles_cell->end(), particle), particles_cell->end());
-	}
+    if (withInGrid(x, y, z)) {
+        (this->grid)[x][y][z]->push_back(particle);
+        return true;
+    } else {
+        //Remove in iterator?
+        //this->removeFromGrid(particle, false);
+        return false;
+    }
+}
+
+bool ParticleGrid::unregisterGridPos(Particle* particle) {
+    extern long double H;
+    int x = (particle->position->x - this->min_bounds->x) / H;  
+    int y = (particle->position->y - this->min_bounds->y) / H; 
+    int z = (particle->position->z - this->min_bounds->z) / H;
+
+    if (withInGrid(x, y, z)) {
+        vector<Particle*>* particles_cell =  (this->grid)[x][y][z];
+        particles_cell->erase(remove(particles_cell->begin(), particles_cell->end(), particle), particles_cell->end());
+        return true;
+    } else {
+        return false;
+    }
+}
+
+void ParticleGrid::removeFromGrid(Particle* particle, bool unregister) {
+    if (unregister) {
+        this->unregisterGridPos(particle);
+    }
+    switch (particle->type) {
+        case Particle_Water: {
+            this->water_particles->erase(remove(this->water_particles->begin(), this->water_particles->end(), particle), this->water_particles->end());
+            break;
+        }
+        case Particle_Fog: {
+            this->fog_particles->erase(remove(this->fog_particles->begin(), this->fog_particles->end(), particle), this->fog_particles->end());
+            break;
+        }
+        case Particle_Boundary: {
+            this->boundary_particles->erase(remove(this->boundary_particles->begin(), this->boundary_particles->end(), particle), this->boundary_particles->end());
+            break;
+        }
+    }
 }
 
 vector<Particle*>* ParticleGrid::getNeighbors(Particle* particle) {
@@ -99,6 +150,6 @@ void ParticleGrid::clearNeighborsMap() {
 }
 
 ThreeDVector* ParticleGrid::minCornerOfCell(int x, int y, int z) {
-	extern long double H;
-	return new ThreeDVector(x * H + this->min_bounds->x, y * H + this->min_bounds->y, z * H + this->min_bounds->z);
+    extern long double H;
+    return new ThreeDVector(x * H + this->min_bounds->x, y * H + this->min_bounds->y, z * H + this->min_bounds->z);
 }

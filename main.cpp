@@ -35,19 +35,19 @@ long double PI = atan(1)*4;
 long double E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION =  0.01;
+long double TIMESTEP_DURATION =  0.005;
 long double PARTICLE_RADIUS = 0.10;
 //long double H = 0.01;
-long double H = 0.02;
+long double H = .225;
 long double MARCHING_CUBE_STEP_SIZE = .13131;
 //long double MARCHING_CUBE_STEP_SIZE = 2;
 long double ISOVALUE_THRESHOLD = 0.5;
 
-long double WATER_MASS = 0.001;
-long double WATER_VICOSITY_COEFFICIENT = 1;
+long double WATER_MASS = 1;
+long double WATER_VICOSITY_COEFFICIENT = 0.01;
 long double WATER_BUOYANCY_STRENGTH = 0.0;
 long double WATER_GAS_CONSTANT = 2;
-long double WATER_REST_DENSITY = 600.0;
+long double WATER_REST_DENSITY = 1000;
 long double WATER_TEMP = 25.0;
 long double FOG_MASS = 1.0;
 long double FOG_VICOSITY_COEFFICIENT = 1.0;
@@ -55,7 +55,7 @@ long double FOG_BUOYANCY_STRENGTH = 1.0;
 long double FOG_GAS_CONSTANT = 1.0;
 long double FOG_REST_DENSITY = 1.0;
 long double FOG_TEMP = 1.0;
-long double BOUNDARY_MASS = 0.001;
+long double BOUNDARY_MASS = 20;
 
 //COLORS
 typedef enum {
@@ -69,11 +69,6 @@ using namespace std;
 
 //Our Polygons/Primatives
 vector<vector<pair<ThreeDVector*, ThreeDVector*> > > polygons;
-
-//Our Particles. Should we combine our water/fog particles?
-vector<Particle*> fog_particles;
-vector<Particle*> water_particles;
-vector<Particle*> boundary_particles;
 
 //Save Boolean
 bool save = false;
@@ -228,8 +223,8 @@ void setBounds() {
   long double transformed_max_z = (max_z - center_z) * scale_factor;
   long double transformed_min_z = (min_z - center_z) * scale_factor;
 
-  min_bounds = new ThreeDVector(-3, -3, -3);
-  max_bounds = new ThreeDVector(3, 3, 3);
+  min_bounds = new ThreeDVector(transformed_min_x * 2, transformed_min_y * 2, transformed_min_z * 10);
+  max_bounds = new ThreeDVector(transformed_max_x * 2, transformed_max_y * 2, transformed_max_z * 10);
 
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
 }
@@ -239,13 +234,12 @@ void setBounds() {
   min_bounds = new ThreeDVector(-5.0, -5.0, -5.0);
   max_bounds = new ThreeDVector(5.0, 5.0, 5.0);
   
-  water_particle_grid = new ParticleGrid(min_bounds, max_bounds);
-  fog_particle_grid = new ParticleGrid(min_bounds, max_bounds);
+  particle_grid = new ParticleGrid(min_bounds, max_bounds);
 }
 
 void advanceOneTimestep() {
   //Calculate densities for this time step first
-  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
+  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
     Particle* particle = *it;
     vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
@@ -253,7 +247,7 @@ void advanceOneTimestep() {
   }
 
   //Calculate accelerations next
-  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
+  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
     Particle* particle = *it;
     vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
     particle->set_acceleration(neighbors);
@@ -261,10 +255,10 @@ void advanceOneTimestep() {
   }
 
   //Then perform leapfrog!
-  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
+  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
     Particle* particle = *it;
 
-    particle_grid->removeFromGrid(particle);
+    particle_grid->unregisterGridPos(particle);
     //First Timestep
     if (num_timesteps == 0) {
       particle->leapfrog_start(TIMESTEP_DURATION);
@@ -272,23 +266,23 @@ void advanceOneTimestep() {
     } else {
       particle->leapfrog_step(TIMESTEP_DURATION);
     }
-    particle_grid->addToGrid(particle);
+    particle_grid->registerGridPos(particle);
   }
 
   //Calculate densities for this time step first
-  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
+  for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); ++it) {
     Particle* particle = *it;
-    particle->set_density(&fog_particles);
+    particle->set_density(particle_grid->fog_particles);
   }
 
   //Calculate accelerations next
-  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
+  for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); ++it) {
     Particle* particle = *it;
-    particle->set_acceleration(&fog_particles);
+    particle->set_acceleration(particle_grid->fog_particles);
   }
 
   //Then perform leapfrog!
-  for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); ++it) {
+  for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); ++it) {
     Particle* particle = *it;
     
     //First Timestep
@@ -552,21 +546,65 @@ void myDisplay() {
   glVertex3f(10000, -35.0, -10000);
   glEnd();  */
 
-  setColor(Color_Ground_Brown);
+  setColor(Color_Ground_Brown); //bottom wall
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
-  glVertex3f(-3, -3, -3);
+  glVertex3f(-3, -1, -3);
   glNormal3f(0, 1, 0);
-  glVertex3f(-3, -3, 3);
+  glVertex3f(-3, -1, 3);
   glNormal3f(0, 1, 0);
-  glVertex3f(3, -3, 3);
+  glVertex3f(3, -1, 3);
   glNormal3f(0, 1, 0);
-  glVertex3f(3, -3, -3);
+  glVertex3f(3, -1, -3);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP); //left wall 
+  glNormal3f(1, 0, 0);
+  glVertex3f(-3, -1, -3);
+  glNormal3f(1, 0, 0);
+  glVertex3f(-3, 1, -3);
+  glNormal3f(1, 0, 0);
+  glVertex3f(-3, 1, 3);
+  glNormal3f(1, 0, 0);
+  glVertex3f(-3, -1, 3);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP); //right wall 
+  glNormal3f(-1, 0, 0);
+  glVertex3f(3, -1, -3);
+  glNormal3f(-1, 0, 0);
+  glVertex3f(3, 1, -3);
+  glNormal3f(-1, 0, 0);
+  glVertex3f(3, 1, 3);
+  glNormal3f(-1, 0, 0);
+  glVertex3f(3, -1, 3);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP); //front wall 
+  glNormal3f(0, 0, -1);
+  glVertex3f(-3, -1, 3);
+  glNormal3f(0, 0, -1);
+  glVertex3f(-3, 1, 3);
+  glNormal3f(0, 0, -1);
+  glVertex3f(3, 1, 3);
+  glNormal3f(0, 0, -1);
+  glVertex3f(3, -1, 3);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP); //back wall 
+  glNormal3f(0, 0, 1);
+  glVertex3f(-3, -1, -3);
+  glNormal3f(0, 0, 1);
+  glVertex3f(-3, 1, -3);
+  glNormal3f(0, 0, 1);
+  glVertex3f(3, 1, -3);
+  glNormal3f(0, 0, 1);
+  glVertex3f(3, -1, -3);
   glEnd();
 
   if (spheres) {
     setColor(Water);
-    for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); it++) {
+    for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); it++) {
       Particle* particle = *it;
       glPushMatrix();
       glTranslatef(particle->position->x, particle->position->y, particle->position->z);
@@ -575,27 +613,28 @@ void myDisplay() {
     }
 
     setColor(Fog);
-    for (vector<Particle*>::iterator it = fog_particles.begin(); it != fog_particles.end(); it++) {
+    for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); it++) {
       Particle* particle = *it;
       glPushMatrix();
       glTranslatef(particle->position->x, particle->position->y, particle->position->z);
       glutSolidSphere(PARTICLE_RADIUS, 100, 100);
       glPopMatrix();
     }
+    /*
     setColor(Color_Ground_Brown);
-    for (vector<Particle*>::iterator it = boundary_particles.begin(); it != boundary_particles.end(); it++) {
+    for (vector<Particle*>::iterator it = particle_grid->boundary_particles->begin(); it != particle_grid->boundary_particles->end(); it++) {
       Particle* particle = *it;
       glPushMatrix();
       glTranslatef(particle->position->x, particle->position->y, particle->position->z);
       glutSolidSphere(PARTICLE_RADIUS, 100, 100);
       glPopMatrix();
-    }
+    }*/
   } else if (marching_cubes) {
     setColor(Water);
-    marchingCubes(&water_particles);
+    marchingCubes(particle_grid->water_particles);
 
     setColor(Fog);
-    marchingCubes(&fog_particles);
+    marchingCubes(particle_grid->fog_particles);
   }
 
 
@@ -656,23 +695,21 @@ int main(int argc, char *argv[]) {
   for (int x = -5; x <5; x++) {
     for (int y = -5; y <5; y++) {
       for (int z = -5; z <5; z++) {
-        Particle* water = Particle::createWaterParticle(x * .2, y * .2 , z * .2);
+        Particle* water = Particle::createWaterParticle(x * .1, y * .1 , z * .1);
         particle_grid->addToGrid(water);
-        water_particles.push_back(water);
       }
     }
   }
 
-  for (int x = -5; x <6; x++) {
-    for (int z = -5; z <5; z++) {
-      Particle* boundary = Particle::createBoundaryParticle(x * .5, -3, z * .5);
+  for (int x = -25; x < 30; x++) {
+    for (int z = -25; z < 25; z++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .1, -1, z * .1);
       particle_grid->addToGrid(boundary);
-      boundary_particles.push_back(boundary);
     }
   }
 
   //Calculate densities for particles
-  for (vector<Particle*>::iterator it = water_particles.begin(); it != water_particles.end(); ++it) {
+  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
     Particle* particle = *it;
     vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
