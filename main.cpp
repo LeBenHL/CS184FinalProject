@@ -39,7 +39,7 @@ long double TIMESTEP_DURATION =  0.005;
 long double PARTICLE_RADIUS = 0.10;
 //long double H = 0.01;
 long double H = .225;
-long double MARCHING_CUBE_STEP_SIZE = .13131;
+long double MARCHING_CUBE_STEP_SIZE = .1;
 //long double MARCHING_CUBE_STEP_SIZE = 2;
 long double ISOVALUE_THRESHOLD = 0.5;
 
@@ -76,8 +76,8 @@ bool save = false;
 static const char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = true;
-bool marching_cubes = false;
+bool spheres = false;
+bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
 long double num_timesteps = 0;
@@ -210,7 +210,7 @@ void parseObj(const char* filename) {
 
 
 //old setBounds
-
+/*
 void setBounds() {
   long double center_x = (max_x + min_x) / 2;
   long double center_y = (max_y + min_y) / 2;
@@ -227,16 +227,14 @@ void setBounds() {
   max_bounds = new ThreeDVector(transformed_max_x * 2, transformed_max_y * 2, transformed_max_z * 10);
 
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
-}
+}*/
 
-/*
 void setBounds() {
-  min_bounds = new ThreeDVector(-5.0, -5.0, -5.0);
+  min_bounds = new ThreeDVector(-2.0, -2.0, -2.0);
   max_bounds = new ThreeDVector(5.0, 5.0, 5.0);
   
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
 }
-*/
 
 void advanceOneTimestep() {
   //Calculate densities for this time step first
@@ -256,7 +254,8 @@ void advanceOneTimestep() {
   }
 
   //Then perform leapfrog!
-  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
+  vector<Particle*> water_copy(*(particle_grid->water_particles));
+  for (vector<Particle*>::iterator it = water_copy.begin(); it != water_copy.end(); ++it) {
     Particle* particle = *it;
 
     particle_grid->unregisterGridPos(particle);
@@ -494,7 +493,7 @@ void myDisplay() {
   //print((min_y - center_y) * scale_factor);
 
   //gluLookAt(-5, 0, 2.5, -4, 0, 0, 0, 1, 0);
-  gluLookAt(0, 0, 5, 0, 0, -1, 0, 1, 0);
+  gluLookAt(-4, 3, 4, 0, 0, -1, 0, 1, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -609,7 +608,7 @@ void myDisplay() {
       Particle* particle = *it;
       glPushMatrix();
       glTranslatef(particle->position->x, particle->position->y, particle->position->z);
-      glutSolidSphere(PARTICLE_RADIUS, 100, 100);
+      glutSolidSphere(PARTICLE_RADIUS, 20, 20);
       glPopMatrix();
     }
 
@@ -618,7 +617,7 @@ void myDisplay() {
       Particle* particle = *it;
       glPushMatrix();
       glTranslatef(particle->position->x, particle->position->y, particle->position->z);
-      glutSolidSphere(PARTICLE_RADIUS, 100, 100);
+      glutSolidSphere(PARTICLE_RADIUS, 20, 20);
       glPopMatrix();
     }
     /*
@@ -716,12 +715,6 @@ int main(int argc, char *argv[]) {
     particle->set_density(neighbors);
     //delete neighbors;
   }
-  
-  /*
-  Particle* water = Particle::createWaterParticle(1, 1 , 1);
-  addToGrid(water, &particle_grid);
-  water_particles.push_back(water);
-  */
 
   //This initializes glut
   glutInit(&argc, argv);

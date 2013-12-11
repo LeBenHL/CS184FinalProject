@@ -32,9 +32,11 @@ ThreeDVector* ThreeDVector::normalize(){
 void ThreeDVector::normalize_bang(){
 	//cout << "BEFORE: " << this->x << ", " << this->y << ", " << this->z << endl;
 	long double mag = magnitude();
-	this->x /= mag;
-	this->y /= mag;
-	this->z /= mag;
+	if (mag != 0) {
+		this->x /= mag;
+		this->y /= mag;
+		this->z /= mag;
+	}
 	//cout << "AFTER: " << this->x << ", " << this->y << ", " << this->z << endl;
 }
 

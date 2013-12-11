@@ -152,7 +152,7 @@ pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, 
   n1 = particle_grid->getNeighbors(x, y, z+this->size);
   n2 = particle_grid->getNeighbors(x, y, z-this->size);
   long double normal_z =  (Particle::colorAt(x, y, z+this->size, n1) - Particle::colorAt(x, y, z-this->size, n2))/this->size;
-  vertex_normal = new ThreeDVector(normal_x, normal_y, normal_z);
+  vertex_normal = new ThreeDVector(-normal_x, -normal_y, -normal_z);
   vertex_normal->normalize_bang();
   //delete n1;
   //delete n2;
@@ -201,6 +201,7 @@ ThreeDVector* MarchingCube::pointAt(int corner_index) {
 
 vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, long double step_size) {
   //Get Bounds of the particles
+  extern long double H;
   long double max_x = -numeric_limits<long double>::max();
   long double min_x = numeric_limits<long double>::max();
   long double max_y = -numeric_limits<long double>::max();
@@ -220,7 +221,7 @@ vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, 
   }
 
   //Offset bounds by some number so we don't generate cubes that end right on the particle.
-  long double episilon = step_size/2;
+  long double episilon = H;
   max_x += episilon; min_x -= episilon; max_y += episilon, min_y -= episilon; max_z += episilon, min_z -= episilon;
 
   int num_steps_in_x = ceil((max_x - min_x) / step_size);

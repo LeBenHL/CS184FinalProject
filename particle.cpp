@@ -43,9 +43,9 @@ namespace std {
       long double y = k->point->y * p_2;
       long double z = k->point->z * p_3;
 
-      std::size_t h1 = std::hash<std::long double>()(x);
-      std::size_t h2 = std::hash<std::long double>()(y);
-      std::size_t h3 = std::hash<std::long double>()(z);
+      std::size_t h1 = std::hash<long double>()(x);
+      std::size_t h2 = std::hash<long double>()(y);
+      std::size_t h3 = std::hash<long double>()(z);
 
       return h1 ^ h2 ^ h3; 
     }
@@ -87,7 +87,7 @@ void Particle::set_density(vector<Particle*>* particles) {
 	}
 	//TODO Save density?
 
-	cout << running_sum << endl;
+	//cout << running_sum << endl;
 	this->density = running_sum;
 }
 
@@ -180,11 +180,13 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
 			Particle* particle = *it;
 			if(this->type == particle->type){
 				//TODO what is correct value of H?
-				ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
-				velocity_difference->scalar_multiply_bang(particle->mass / particle->density);
-				velocity_difference->scalar_multiply_bang(Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), H));
-				running_sum->vector_add_bang(velocity_difference);
-				delete velocity_difference;
+				long double multiplier = (particle->mass / particle->density) * Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), H);
+				if (multiplier != 0) {
+					ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
+					velocity_difference->scalar_multiply_bang(multiplier);
+					running_sum->vector_add_bang(velocity_difference);
+					delete velocity_difference;
+				}
 			}
 		}
 		running_sum->scalar_multiply_bang(this->viscosity_coefficient);
@@ -203,11 +205,9 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 				//TODO what is correct value of H?
 				long double particle_pressure = particle->pressure();
 				long double average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
-				ThreeDVector* r = this->position->vector_subtract(particle->position);
-				ThreeDVector* gradient = Particle::spikyGradientKernel(r, H);
+				ThreeDVector* gradient = Particle::spikyGradientKernel(this->position, particle->position, H);
 				gradient->scalar_multiply_bang(average_pressure);
 				running_sum->vector_add_bang(gradient);
-				delete r;
 				delete gradient;
 			}
 		}
@@ -386,7 +386,8 @@ Particle* Particle::createBoundaryParticle(long double x, long double y, long do
 long double Particle::poly6Kernel(long double r, long double h) {
 	if (r >= 0 && r <= h) {
 		extern long double PI;
-		return (315 * pow(pow(h, 2) - pow(r, 2), 3)) / (64 * PI * pow(h, 9));
+		long double hsquare_minus_rsquare = h * h - r * r;
+		return (315 * hsquare_minus_rsquare * hsquare_minus_rsquare * hsquare_minus_rsquare) / (64 * PI * pow(h, 9));
 	} else {
 		return 0;
 	}
@@ -401,13 +402,15 @@ long double Particle::viscosityGradientSquaredKernel(long double r, long double 
 	}
 }
 
-ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, long double h) {
-	long double r_mag = r->magnitude();
-	if (r_mag >= 0 && r_mag <= h) {
+ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, long double h) {
+	long double mag = r->distance(r_particle);
+	if (mag >= 0 && mag <= h) {
+		ThreeDVector* delta = r->vector_subtract(r_particle);
 		extern long double PI;
-		ThreeDVector* r_normal = r->normalize();
-		r_normal->scalar_multiply_bang(-((45 * pow(h - r_mag, 2)) / (PI * pow(h, 6))));
-		return r_normal;
+		delta->normalize_bang();
+		long double h_minus_mag = h - mag;
+		delta->scalar_multiply_bang(-((45 * h_minus_mag * h_minus_mag) / (PI * pow(h, 6))));
+		return delta;
 	} else {
 		return new ThreeDVector();
 	}

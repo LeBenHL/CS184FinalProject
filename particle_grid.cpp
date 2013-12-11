@@ -70,7 +70,7 @@ bool ParticleGrid::registerGridPos(Particle* particle) {
         return true;
     } else {
         //Remove in iterator?
-        //this->removeFromGrid(particle, false);
+        this->removeFromGrid(particle, false);
         return false;
     }
 }
