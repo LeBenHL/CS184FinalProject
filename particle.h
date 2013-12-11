@@ -22,6 +22,14 @@ class Particle {
 		long double rest_density;
 		long double temperature;
 
+		typedef enum {
+		  Particle_Water,
+		  Particle_Fog,
+		  Particle_Boundary
+		}Particle_Type;
+
+		 Particle_Type type;
+
 		static map<ThreeDVector*, long double, comparator>* color_map;
 
 		//Interpolated Fields
@@ -30,7 +38,7 @@ class Particle {
 
 		Particle(long double x, long double y, long double z, long double mass, 
 			ThreeDVector* velocity, long double viscosity_coefficient, long double buoyancy_strength, 
-			long double gas_constant, long double rest_density, long double temperature);
+			long double gas_constant, long double rest_density, long double temperature, Particle_Type t);
 		~Particle();
 		void set_density(vector<Particle*>* particles);
 		void set_acceleration(vector<Particle*>* particles);
@@ -42,6 +50,7 @@ class Particle {
 		
 		ThreeDVector* viscosityForce(vector<Particle*>* particles);
 		ThreeDVector* pressureForce(vector<Particle*>* particles);
+		ThreeDVector* boundaryForce(vector<Particle*>* particles);
 		long double pressure();
 		ThreeDVector* externalForce();
 		ThreeDVector* gravity();
@@ -58,6 +67,7 @@ class Particle {
 
 		static Particle* createWaterParticle(long double x, long double y, long double z, ThreeDVector* velocity=new ThreeDVector());
 		static Particle* createFogParticle(long double x, long double y, long double z, ThreeDVector* velocity=new ThreeDVector());
+		static Particle* createBoundaryParticle(long double x, long double y, long double z, ThreeDVector* velocity=new ThreeDVector());
 
 
 		//Poly 6 Kernel from http://www.matthiasmueller.info/publications/sca03.pdf
