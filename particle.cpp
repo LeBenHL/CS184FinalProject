@@ -407,7 +407,8 @@ ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_par
 	if (mag >= 0 && mag <= h) {
 		ThreeDVector* delta = r->vector_subtract(r_particle);
 		extern long double PI;
-		delta->normalize_bang();
+		//Normalize Vector
+		delta->scalar_multiply_bang(1/mag);
 		long double h_minus_mag = h - mag;
 		delta->scalar_multiply_bang(-((45 * h_minus_mag * h_minus_mag) / (PI * pow(h, 6))));
 		return delta;
