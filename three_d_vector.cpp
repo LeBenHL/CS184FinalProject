@@ -94,20 +94,6 @@ ThreeDVector* ThreeDVector::clone(){
 	return new ThreeDVector(this->x, this->y, this->z);
 }
 
-void ThreeDVector::transform_bang(Eigen::Matrix4f transformation, bool point) {
-	Eigen::Vector4f old;
-	if (point) {
-		old = Eigen::Vector4f(this->x, this->y, this->z, 1);
-	} else {
-		old = Eigen::Vector4f(this->x, this->y, this->z, 0);
-	}
-	Eigen::Vector4f transformed = transformation * old;
-
-	this->x = transformed[0];
-	this->y = transformed[1];
-	this->z = transformed[2];
-}
-
 char* ThreeDVector::repr() {
 	char* buffer = new char[1000];
 	sprintf(buffer, "<ThreeDVector, x = %0.2f, y = %0.2f, z = %0.2f>", this->x, this->y, this->z);
