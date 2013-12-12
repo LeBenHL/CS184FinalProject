@@ -198,12 +198,14 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 			Particle* particle = *it;
 			if(this->type == particle->type){
 				//TODO what is correct value of H?
-				float particle_pressure = particle->pressure();
-				float average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
 				ThreeDVector* gradient = Particle::spikyGradientKernel(this->position, particle->position, H);
-				gradient->scalar_multiply_bang(average_pressure);
-				running_sum->vector_add_bang(gradient);
-				delete gradient;
+				if (gradient) {
+					float particle_pressure = particle->pressure();
+					float average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
+					gradient->scalar_multiply_bang(average_pressure);
+					running_sum->vector_add_bang(gradient);
+					delete gradient;
+				}
 			}
 		}
 		running_sum->scalar_multiply_bang(-1);
@@ -346,6 +348,7 @@ float Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
 			Particle* particle = *it;
 			running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
 		}
+		#pragma omp critical(colorMapInsert) 
 		Particle::color_map->insert(pair<ThreeDVector*, float>(position->clone(), running_sum));
 		return running_sum;
 	} else {
@@ -410,7 +413,7 @@ ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_par
 		delta->scalar_multiply_bang(-((45 * h_minus_mag * h_minus_mag) / (PI * pow(h, 6))));
 		return delta;
 	} else {
-		return new ThreeDVector();
+		return false;
 	}
 }
 

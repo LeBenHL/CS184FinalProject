@@ -100,7 +100,7 @@ bool save = false;
 char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = true;
+bool spheres = false;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
@@ -478,29 +478,33 @@ void marchingCubes(vector<Particle*>* particles) {
   int counter = 0;
   vector<MarchingCube*>* cubes = MarchingCube::generateGrid(particles, MARCHING_CUBE_STEP_SIZE);
   //vector<MarchingCube*>* cubes = MarchingCube::generateGridFast(particle_grid, MARCHING_CUBE_STEP_SIZE);
-  print(int(cubes->size()));
-  for (vector<MarchingCube*>::iterator it = cubes->begin(); it != cubes->end(); ++it) {
-    MarchingCube* cube = *it;
+  vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = new vector<vector<pair<ThreeDVector*, ThreeDVector*> > >;
+
+  for(int i = 0; i < cubes->size(); ++i) {
+    MarchingCube* cube = cubes->at(i);
     //char* buffer = new char[1000];
     //sprintf(buffer, "%d/%d", ++counter, cubes->size());
     //print(buffer);
-    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = cube->triangulate(particle_grid, ISOVALUE_THRESHOLD);
-    for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = triangles->begin(); it != triangles->end(); ++it) {
-      vector<pair<ThreeDVector*, ThreeDVector*> > triangle = *it;
-      glBegin(GL_POLYGON);                      // Draw A Polygon
-      for(vector<pair<ThreeDVector*, ThreeDVector*> >::iterator i = triangle.begin(); i != triangle.end(); ++i) {
-        pair<ThreeDVector*, ThreeDVector*> vertex_pair = *i;
-        ThreeDVector* vertex = vertex_pair.first;
-        ThreeDVector* normal = vertex_pair.second;
-        glNormal3f(normal->x, normal->y, normal->z);
-        glVertex3f(vertex->x, vertex->y, vertex->z);
-        delete vertex;
-        delete normal;
-      }
-      glEnd();
-    }
-    delete triangles;
+    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles_subset = cube->triangulate(particle_grid, ISOVALUE_THRESHOLD);
+    #pragma omp critical
+    triangles->insert(triangles->end(), triangles_subset->begin(), triangles_subset->end());
+    delete triangles_subset;
     delete cube;
+  }
+
+  for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = triangles->begin(); it != triangles->end(); ++it) {
+    vector<pair<ThreeDVector*, ThreeDVector*> > triangle = *it;
+    glBegin(GL_POLYGON);                      // Draw A Polygon
+    for(vector<pair<ThreeDVector*, ThreeDVector*> >::iterator i = triangle.begin(); i != triangle.end(); ++i) {
+      pair<ThreeDVector*, ThreeDVector*> vertex_pair = *i;
+      ThreeDVector* vertex = vertex_pair.first;
+      ThreeDVector* normal = vertex_pair.second;
+      glNormal3f(normal->x, normal->y, normal->z);
+      glVertex3f(vertex->x, vertex->y, vertex->z);
+      delete vertex;
+      delete normal;
+    }
+  glEnd();
   }
 
   delete cubes;
