@@ -6,6 +6,7 @@
 #include <fstream>
 #include <cmath>
 #include <string>
+#include <limits>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -202,7 +203,7 @@ void parseObj(const char* filename) {
           char v_str[500];
           strncpy(v_str, v, sizeof(v_str));
           vector<int> vector_of_indices; 
-          char *pch = std::strtok(v_str, "/");
+          char *pch = strtok(v_str, "/");
           int last = 0;
           while (pch != NULL){
             last++;
@@ -261,16 +262,19 @@ void setBounds() {
 
 void advanceOneTimestep() {
   //Calculate densities for this time step first
-  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
-    Particle* particle = *it;
-    vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
+  #pragma omp parallel for
+  for (int i = 0; i < particle_grid->water_particles->size(); ++i) {
+    Particle* particle = particle_grid->water_particles->at(i);
+    vector<Particle*>* neighbors;
+    neighbors = particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
     //delete neighbors;
   }
 
   //Calculate accelerations next
-  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
-    Particle* particle = *it;
+  #pragma omp parallel for
+  for (int i = 0; i < particle_grid->water_particles->size(); ++i) {
+    Particle* particle = particle_grid->water_particles->at(i);
     vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
     particle->set_acceleration(neighbors);
     //delete neighbors;
@@ -278,8 +282,9 @@ void advanceOneTimestep() {
 
   //Then perform leapfrog!
   vector<Particle*> water_copy(*(particle_grid->water_particles));
-  for (vector<Particle*>::iterator it = water_copy.begin(); it != water_copy.end(); ++it) {
-    Particle* particle = *it;
+  #pragma omp parallel for
+  for (int i = 0; i < water_copy.size(); ++i) {
+    Particle* particle = water_copy.at(i);
 
     particle_grid->unregisterGridPos(particle);
     //First Timestep
@@ -293,14 +298,16 @@ void advanceOneTimestep() {
   }
 
   //Calculate densities for this time step first
-  for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); ++it) {
-    Particle* particle = *it;
+  #pragma omp parallel for
+  for (int i = 0; i < particle_grid->fog_particles->size(); ++i) {
+    Particle* particle = particle_grid->fog_particles->at(i);
     particle->set_density(particle_grid->fog_particles);
   }
 
   //Calculate accelerations next
-  for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); ++it) {
-    Particle* particle = *it;
+  #pragma omp parallel for
+  for (int i = 0; i < particle_grid->fog_particles->size(); ++i) {
+    Particle* particle = particle_grid->fog_particles->at(i);
     particle->set_acceleration(particle_grid->fog_particles);
   }
 
@@ -769,8 +776,9 @@ int main(int argc, char *argv[]) {
   }
 
   //Calculate densities for particles
-  for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); ++it) {
-    Particle* particle = *it;
+  #pragma omp parallel for
+  for (int i = 0; i < particle_grid->water_particles->size(); ++i) {
+    Particle* particle = particle_grid->water_particles->at(i);
     vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
     //delete neighbors;

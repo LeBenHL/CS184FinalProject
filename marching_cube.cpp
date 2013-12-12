@@ -1,5 +1,6 @@
 #include "marching_cube.h"
 #include <iostream>
+#include <limits>
 
 MarchingCube::MarchingCube(ThreeDVector* min_corner, float size) {
   this->min_corner = min_corner;

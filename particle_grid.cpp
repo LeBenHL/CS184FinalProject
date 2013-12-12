@@ -1,5 +1,6 @@
 #include "particle_grid.h"
 #include <iostream>
+#include <algorithm>
 
 ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
     extern float H;
@@ -66,6 +67,7 @@ bool ParticleGrid::registerGridPos(Particle* particle) {
     int z = (particle->position->z - this->min_bounds->z) / H; 
 
     if (withInGrid(x, y, z)) {
+        #pragma omp critical(addToGrid) 
         (this->grid)[x][y][z]->push_back(particle);
         return true;
     } else {
@@ -83,7 +85,8 @@ bool ParticleGrid::unregisterGridPos(Particle* particle) {
 
     if (withInGrid(x, y, z)) {
         vector<Particle*>* particles_cell =  (this->grid)[x][y][z];
-        particles_cell->erase(remove(particles_cell->begin(), particles_cell->end(), particle), particles_cell->end());
+        #pragma omp critical(removeFromGrid) 
+        particles_cell->erase(std::remove(particles_cell->begin(), particles_cell->end(), particle), particles_cell->end());
         return true;
     } else {
         return false;
@@ -96,15 +99,18 @@ void ParticleGrid::removeFromGrid(Particle* particle, bool unregister) {
     }
     switch (particle->type) {
         case Particle_Water: {
-            this->water_particles->erase(remove(this->water_particles->begin(), this->water_particles->end(), particle), this->water_particles->end());
+            #pragma omp critical(eraseWater) 
+            this->water_particles->erase(std::remove(this->water_particles->begin(), this->water_particles->end(), particle), this->water_particles->end());
             break;
         }
         case Particle_Fog: {
-            this->fog_particles->erase(remove(this->fog_particles->begin(), this->fog_particles->end(), particle), this->fog_particles->end());
+            #pragma omp critical(eraseFog) 
+            this->fog_particles->erase(std::remove(this->fog_particles->begin(), this->fog_particles->end(), particle), this->fog_particles->end());
             break;
         }
         case Particle_Boundary: {
-            this->boundary_particles->erase(remove(this->boundary_particles->begin(), this->boundary_particles->end(), particle), this->boundary_particles->end());
+            #pragma omp critical(eraseBoundary) 
+            this->boundary_particles->erase(std::remove(this->boundary_particles->begin(), this->boundary_particles->end(), particle), this->boundary_particles->end());
             break;
         }
     }
@@ -133,6 +139,7 @@ vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float po
                 }
             }
         }
+        #pragma omp critical(neighborsMapInsert) 
         this->neighbors_map->insert(pair<ThreeDVector*, vector<Particle*>*>(position, neighbors));
         return neighbors;
     } else {
