@@ -27,7 +27,7 @@ class ParticleGrid {
 		bool withInGrid(int x, int y, int z);
 		bool registerGridPos(Particle* particle);
 		vector<Particle*>* getNeighbors(Particle* particle);
-		vector<Particle*>* getNeighbors(long double pos_x, long double pos_y, long double pos_z);
+		vector<Particle*>* getNeighbors(float pos_x, float pos_y, float pos_z);
 		void removeFromGrid(Particle* particle, bool unregister=true);
 		bool unregisterGridPos(Particle* particle);
 		void clearNeighborsMap();

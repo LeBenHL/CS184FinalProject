@@ -2,7 +2,7 @@
 #include <iostream>
 
 ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
-    extern long double H;
+    extern float H;
     this->min_bounds = min_bounds;
 
     int x = ceil((max_bounds->x - min_bounds->x)/H);
@@ -60,7 +60,7 @@ void ParticleGrid::addToGrid(Particle* particle) {
 }
 
 bool ParticleGrid::registerGridPos(Particle* particle) {
-    extern long double H;
+    extern float H;
     int x = (particle->position->x - this->min_bounds->x) / H;  
     int y = (particle->position->y - this->min_bounds->y) / H; 
     int z = (particle->position->z - this->min_bounds->z) / H; 
@@ -76,7 +76,7 @@ bool ParticleGrid::registerGridPos(Particle* particle) {
 }
 
 bool ParticleGrid::unregisterGridPos(Particle* particle) {
-    extern long double H;
+    extern float H;
     int x = (particle->position->x - this->min_bounds->x) / H;  
     int y = (particle->position->y - this->min_bounds->y) / H; 
     int z = (particle->position->z - this->min_bounds->z) / H;
@@ -114,8 +114,8 @@ vector<Particle*>* ParticleGrid::getNeighbors(Particle* particle) {
     return getNeighbors(particle->position->x, particle->position->y, particle->position->z);
 }
 
-vector<Particle*>* ParticleGrid::getNeighbors(long double pos_x, long double pos_y, long double pos_z) {
-    extern long double H;
+vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float pos_z) {
+    extern float H;
     int x = (pos_x - this->min_bounds->x) / H;  
     int y = (pos_y - this->min_bounds->y) / H; 
     int z = (pos_z - this->min_bounds->z) / H;
@@ -150,6 +150,6 @@ void ParticleGrid::clearNeighborsMap() {
 }
 
 ThreeDVector* ParticleGrid::minCornerOfCell(int x, int y, int z) {
-    extern long double H;
+    extern float H;
     return new ThreeDVector(x * H + this->min_bounds->x, y * H + this->min_bounds->y, z * H + this->min_bounds->z);
 }

@@ -31,31 +31,31 @@
 #include "particle_grid.h"
 
 //CONSTANTS
-long double PI = atan(1)*4;
-long double E = 2.7182818284590452353;
+float PI = atan(1)*4;
+float E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
-long double AMBIENT_TEMP = 25;
-long double TIMESTEP_DURATION =  0.005;
-long double PARTICLE_RADIUS = 0.10;
-//long double H = 0.01;
-long double H = .225;
-long double MARCHING_CUBE_STEP_SIZE = .1;
-//long double MARCHING_CUBE_STEP_SIZE = 2;
-long double ISOVALUE_THRESHOLD = 0.5;
+float AMBIENT_TEMP = 25;
+float TIMESTEP_DURATION =  0.005;
+float PARTICLE_RADIUS = 0.1;
+//float H = 0.01;
+float H = .2;
+float MARCHING_CUBE_STEP_SIZE = .1;
+//float MARCHING_CUBE_STEP_SIZE = 2;
+float ISOVALUE_THRESHOLD = 0.5;
 
-long double WATER_MASS = 1;
-long double WATER_VICOSITY_COEFFICIENT = 0.01;
-long double WATER_BUOYANCY_STRENGTH = 0.0;
-long double WATER_GAS_CONSTANT = 2;
-long double WATER_REST_DENSITY = 1000;
-long double WATER_TEMP = 25.0;
-long double FOG_MASS = 1.0;
-long double FOG_VICOSITY_COEFFICIENT = 1.0;
-long double FOG_BUOYANCY_STRENGTH = 1.0;
-long double FOG_GAS_CONSTANT = 1.0;
-long double FOG_REST_DENSITY = 1.0;
-long double FOG_TEMP = 1.0;
-long double BOUNDARY_MASS = 20;
+float WATER_MASS = 1.2;
+float WATER_VICOSITY_COEFFICIENT = 0.1;
+float WATER_BUOYANCY_STRENGTH = 0.0;
+float WATER_GAS_CONSTANT = 300;
+float WATER_REST_DENSITY = 1000;
+float WATER_TEMP = 25.0;
+float FOG_MASS = 1.0;
+float FOG_VICOSITY_COEFFICIENT = 1.0;
+float FOG_BUOYANCY_STRENGTH = 1.0;
+float FOG_GAS_CONSTANT = 1.0;
+float FOG_REST_DENSITY = 1.0;
+float FOG_TEMP = 1.0;
+float BOUNDARY_MASS = 20;
 
 //COLORS
 typedef enum {
@@ -76,19 +76,19 @@ bool save = false;
 static const char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = false;
+bool spheres = true;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
-long double num_timesteps = 0;
+float num_timesteps = 0;
 
 //Max/Min x,y,z
-long double max_x = numeric_limits<long double>::min();
-long double min_x = numeric_limits<long double>::max();
-long double max_y = numeric_limits<long double>::min();
-long double min_y = numeric_limits<long double>::max();
-long double max_z = numeric_limits<long double>::min();
-long double min_z = numeric_limits<long double>::max();
+float max_x = numeric_limits<float>::min();
+float min_x = numeric_limits<float>::max();
+float max_y = numeric_limits<float>::min();
+float min_y = numeric_limits<float>::max();
+float max_z = numeric_limits<float>::min();
+float min_z = numeric_limits<float>::max();
 
 //Bounding Box
 ThreeDVector* min_bounds;
@@ -97,14 +97,14 @@ ThreeDVector* max_bounds;
 //Grids containing Particles
 ParticleGrid* particle_grid;
 
-long double scale_factor = 1.0/500000.0;
+float scale_factor = 1.0/500000.0;
 
 //Print Function for debugging
 void print(string _string) {
   cout << _string << endl;
 }
 
-void print(long double num) {
+void print(float num) {
   cout << num << endl;
 }
 
@@ -152,17 +152,17 @@ void parseObj(const char* filename) {
       //Valid commands:
       //v x y z [w]
       else if(!splitline[0].compare("v")) {
-        long double x = atof(splitline[1].c_str());
-        long double y = atof(splitline[2].c_str());
-        long double z = atof(splitline[3].c_str());
+        float x = atof(splitline[1].c_str());
+        float y = atof(splitline[2].c_str());
+        float z = atof(splitline[3].c_str());
         ThreeDVector* vertex = new ThreeDVector(x, y, z);
         vertices.push_back(vertex);
       }
       //vn x y z
       else if(!splitline[0].compare("vn")) {
-        long double x = atof(splitline[1].c_str());
-        long double y = atof(splitline[2].c_str());
-        long double z = atof(splitline[3].c_str());
+        float x = atof(splitline[1].c_str());
+        float y = atof(splitline[2].c_str());
+        float z = atof(splitline[3].c_str());
         ThreeDVector* normal = new ThreeDVector(x, y, z);
         normal->normalize_bang();
         vertices_normals.push_back(normal);
@@ -212,16 +212,16 @@ void parseObj(const char* filename) {
 //old setBounds
 /*
 void setBounds() {
-  long double center_x = (max_x + min_x) / 2;
-  long double center_y = (max_y + min_y) / 2;
-  long double center_z = (max_z + min_z) / 2;
+  float center_x = (max_x + min_x) / 2;
+  float center_y = (max_y + min_y) / 2;
+  float center_z = (max_z + min_z) / 2;
 
-  long double transformed_max_x = (max_x - center_x) * scale_factor;
-  long double transformed_min_x = (min_x - center_x) * scale_factor;
-  long double transformed_max_y = (max_y - center_y) * scale_factor;
-  long double transformed_min_y = (min_y - center_y) * scale_factor;
-  long double transformed_max_z = (max_z - center_z) * scale_factor;
-  long double transformed_min_z = (min_z - center_z) * scale_factor;
+  float transformed_max_x = (max_x - center_x) * scale_factor;
+  float transformed_min_x = (min_x - center_x) * scale_factor;
+  float transformed_max_y = (max_y - center_y) * scale_factor;
+  float transformed_min_y = (min_y - center_y) * scale_factor;
+  float transformed_max_z = (max_z - center_z) * scale_factor;
+  float transformed_min_z = (min_z - center_z) * scale_factor;
 
   min_bounds = new ThreeDVector(transformed_min_x * 2, transformed_min_y * 2, transformed_min_z * 10);
   max_bounds = new ThreeDVector(transformed_max_x * 2, transformed_max_y * 2, transformed_max_z * 10);
@@ -230,7 +230,7 @@ void setBounds() {
 }*/
 
 void setBounds() {
-  min_bounds = new ThreeDVector(-2.0, -2.0, -2.0);
+  min_bounds = new ThreeDVector(-3.0, -3.0, -3.0);
   max_bounds = new ThreeDVector(5.0, 5.0, 5.0);
   
   particle_grid = new ParticleGrid(min_bounds, max_bounds);
@@ -339,8 +339,8 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 void initScene(){
-  glClearColor(0.52941f, 0.80784f, 0.98039f, 0.0f); // Clear to Sky Blue, fully transparent
-
+  //glClearColor(0.52941f, 0.80784f, 0.98039f, 0.0f); // Clear to Sky Blue, fully transparent
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   // Enable lighting and the light we have set up
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
@@ -487,9 +487,9 @@ void myDisplay() {
   glMatrixMode(GL_MODELVIEW);         // indicate we are specifying camera transformations
   glLoadIdentity();                   // make sure transformation is "zero'd"
 
-  long double center_x = (max_x + min_x) / 2;
-  long double center_y = (max_y + min_y) / 2;
-  long double center_z = (max_z + min_z) / 2;
+  float center_x = (max_x + min_x) / 2;
+  float center_y = (max_y + min_y) / 2;
+  float center_z = (max_z + min_z) / 2;
   //print((min_y - center_y) * scale_factor);
 
   //gluLookAt(-5, 0, 2.5, -4, 0, 0, 0, 1, 0);
@@ -692,20 +692,49 @@ int main(int argc, char *argv[]) {
   //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -5; x <5; x++) {
+  for (int x = -10; x <10; x++) {
     for (int y = -5; y <5; y++) {
-      for (int z = -5; z <5; z++) {
-        Particle* water = Particle::createWaterParticle(x * .1, y * .1 , z * .1);
+      for (int z = -10; z <10; z++) {
+        Particle* water = Particle::createWaterParticle(x * .1, y * .1 - 0.5 , z * .1);
         particle_grid->addToGrid(water);
       }
     }
   }
 
-  for (int x = -25; x < 30; x++) {
-    for (int z = -25; z < 25; z++) {
+  for (int x = -30; x < 30; x++) {
+    for (int z = -30; z < 30; z++) {
       Particle* boundary = Particle::createBoundaryParticle(x * .1, -1, z * .1);
       particle_grid->addToGrid(boundary);
     }
+  }
+
+  for (int y = -30; y < 30; y++) {
+    for (int x = -30; x < 30; x++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .1, y * 0.1, -3);
+      particle_grid->addToGrid(boundary);
+    }      
+  }
+
+  for (int y = -30; y < 30; y++) {
+    for (int x = -30; x < 30; x++) {      
+      Particle* boundary = Particle::createBoundaryParticle(x * 0.1, y * 0.1, 3);
+      particle_grid->addToGrid(boundary);
+    }
+  }
+
+  for (int z = -30; z < 30; z++) {
+    for (int y = -30; y < 30; y++) {
+      Particle* boundary = Particle::createBoundaryParticle(-3,  y * 0.1, z * 0.1);
+      particle_grid->addToGrid(boundary);
+
+    }
+  }
+
+  for (int z = -30; z < 30; z++) {
+    for (int y = -30; y < 30; y++) {
+      Particle* boundary = Particle::createBoundaryParticle(3, y * 0.1, z * 0.1);
+      particle_grid->addToGrid(boundary);
+    }      
   }
 
   //Calculate densities for particles

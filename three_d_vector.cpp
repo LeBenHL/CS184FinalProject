@@ -5,22 +5,22 @@
 #include <cfloat>
 using namespace std;
 
-ThreeDVector::ThreeDVector(long double _x, long double _y, long double _z) {
+ThreeDVector::ThreeDVector(float _x, float _y, float _z) {
 	x = _x;
 	y = _y;
 	z = _z;
 }
 
-long double ThreeDVector::magnitude(){
-	long double x = this->x;
-	long double y = this->y;
-	long double z = this->z;
+float ThreeDVector::magnitude(){
+	float x = this->x;
+	float y = this->y;
+	float z = this->z;
 	return sqrt(x*x+y*y+z*z);
 }
 
 ThreeDVector* ThreeDVector::normalize(){
 	//cout << "BEFORE: " << this->x << ", " << this->y << ", " << this->z << endl;
-	long double mag = magnitude();
+	float mag = magnitude();
 	if (mag == 0) {
 		return new ThreeDVector();
 	} else {
@@ -31,7 +31,7 @@ ThreeDVector* ThreeDVector::normalize(){
 
 void ThreeDVector::normalize_bang(){
 	//cout << "BEFORE: " << this->x << ", " << this->y << ", " << this->z << endl;
-	long double mag = magnitude();
+	float mag = magnitude();
 	if (mag != 0) {
 		this->x /= mag;
 		this->y /= mag;
@@ -42,16 +42,16 @@ void ThreeDVector::normalize_bang(){
 
 
 
-long double ThreeDVector::dot_product(ThreeDVector* v){
+float ThreeDVector::dot_product(ThreeDVector* v){
 	return this->x * v->x + this->y * v->y + this->z * v->z;
 }
 
 
-ThreeDVector* ThreeDVector::scalar_multiply(long double k){	
+ThreeDVector* ThreeDVector::scalar_multiply(float k){	
 	return new ThreeDVector(this->x * k, this->y * k, this->z * k);
 }
 
-void ThreeDVector::scalar_multiply_bang(long double k){	
+void ThreeDVector::scalar_multiply_bang(float k){	
 	this->x *= k;
 	this->y *= k;
 	this->z *= k;
@@ -79,10 +79,10 @@ ThreeDVector* ThreeDVector::cross_product(ThreeDVector* v){
 	return new ThreeDVector(this->y * v->z - this->z * v->y, this->z * v->x - this->x * v->z, this->x * v->y - this->y * v->x);                                                                         
 }
 
-long double ThreeDVector::distance(ThreeDVector* v) {
-	long double delta_x = this->x - v->x;
-	long double delta_y = this->y - v->y;
-	long double delta_z = this->z - v->z;
+float ThreeDVector::distance(ThreeDVector* v) {
+	float delta_x = this->x - v->x;
+	float delta_y = this->y - v->y;
+	float delta_z = this->z - v->z;
 	return sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z);
 }
 
@@ -110,13 +110,13 @@ void ThreeDVector::transform_bang(Eigen::Matrix4f transformation, bool point) {
 
 char* ThreeDVector::repr() {
 	char* buffer = new char[1000];
-	sprintf(buffer, "<ThreeDVector, x = %0.2Lf, y = %0.2Lf, z = %0.2Lf>", this->x, this->y, this->z);
+	sprintf(buffer, "<ThreeDVector, x = %0.2f, y = %0.2f, z = %0.2f>", this->x, this->y, this->z);
 	return buffer;
 }
 
 char* ThreeDVector::print() {
 	char* buffer = new char[1000];
-	sprintf(buffer, "%0.2Lf %0.2Lf %0.2Lf", this->x, this->y, this->z);
+	sprintf(buffer, "%0.2f %0.2f %0.2f", this->x, this->y, this->z);
 	return buffer;
 }
 
@@ -134,9 +134,9 @@ namespace std
     public:
         std::size_t operator()(ThreeDVector const& v) const 
         {
-            return ((hash<long double>()(v.x)
-               ^ (hash<long double>()(v.y) << 1)) >> 1)
-               ^ (hash<long double>()(v.z) << 1);
+            return ((hash<float>()(v.x)
+               ^ (hash<float>()(v.y) << 1)) >> 1)
+               ^ (hash<float>()(v.z) << 1);
         }
     };
 }*/

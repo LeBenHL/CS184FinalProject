@@ -1,7 +1,7 @@
 #include "marching_cube.h"
 #include <iostream>
 
-MarchingCube::MarchingCube(ThreeDVector* min_corner, long double size) {
+MarchingCube::MarchingCube(ThreeDVector* min_corner, float size) {
   this->min_corner = min_corner;
   this->size = size;
 }
@@ -10,7 +10,7 @@ MarchingCube::~MarchingCube() {
   delete this->min_corner; 
 }
 
-vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(ParticleGrid* particle_grid, long double isovalue_threshold) {
+vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(ParticleGrid* particle_grid, float isovalue_threshold) {
   vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = new vector<vector<pair<ThreeDVector*, ThreeDVector*> > >;
   vector<Particle*> *n0, *n1, *n2, *n3, *n4, *n5, *n6, *n7;
   n0 = particle_grid->getNeighbors(min_corner->x, min_corner->y, min_corner->z);
@@ -22,7 +22,7 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(
   n6 = particle_grid->getNeighbors(min_corner->x + this->size, min_corner->y + this->size, min_corner->z + this->size);
   n7 = particle_grid->getNeighbors(min_corner->x, min_corner->y + this->size, min_corner->z + this->size);
 
-  long double color_values[8];
+  float color_values[8];
   color_values[0] =  Particle::colorAt(min_corner->x, min_corner->y, min_corner->z, n0);
   color_values[1] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z, n1);
   color_values[2] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z + this->size, n2);
@@ -109,11 +109,11 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(
   return triangles;
 }
 
-pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, int p2_index, long double color_p1, 
-      long double color_p2, long double isovalue_threshold, ParticleGrid* particle_grid) {
-  long double x, y, z;
+pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, int p2_index, float color_p1, 
+      float color_p2, float isovalue_threshold, ParticleGrid* particle_grid) {
+  float x, y, z;
   vector<Particle*> *n1, *n2;
-  long double epsilon = 0.00001;
+  float epsilon = 0.00001;
   ThreeDVector* vertex;
   ThreeDVector* vertex_normal;
 
@@ -126,7 +126,7 @@ pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, 
   } else {
     ThreeDVector* point1 = this->pointAt(p1_index);
     ThreeDVector* point2 = this->pointAt(p2_index);
-    long double multiplier = (isovalue_threshold - color_p1) / (color_p2 - color_p1);
+    float multiplier = (isovalue_threshold - color_p1) / (color_p2 - color_p1);
     
     x = point1->x + multiplier * (point2->x - point1->x);
     y = point1->y + multiplier * (point2->y - point1->y);
@@ -139,19 +139,19 @@ pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, 
   }
   n1 = particle_grid->getNeighbors(x+this->size, y, z);
   n2 = particle_grid->getNeighbors(x-this->size, y, z);
-  long double normal_x =  (Particle::colorAt(x+this->size, y, z, n1) - Particle::colorAt(x-this->size, y, z, n2))/this->size;
+  float normal_x =  (Particle::colorAt(x+this->size, y, z, n1) - Particle::colorAt(x-this->size, y, z, n2))/this->size;
   //delete n1;
   //delete n2;
 
   n1 = particle_grid->getNeighbors(x, y+this->size, z);
   n2 = particle_grid->getNeighbors(x, y-this->size, z);
-  long double normal_y =  (Particle::colorAt(x, y+this->size, z, n1) - Particle::colorAt(x, y-this->size, z, n2))/this->size;
+  float normal_y =  (Particle::colorAt(x, y+this->size, z, n1) - Particle::colorAt(x, y-this->size, z, n2))/this->size;
   //delete n1;
   //delete n2;
 
   n1 = particle_grid->getNeighbors(x, y, z+this->size);
   n2 = particle_grid->getNeighbors(x, y, z-this->size);
-  long double normal_z =  (Particle::colorAt(x, y, z+this->size, n1) - Particle::colorAt(x, y, z-this->size, n2))/this->size;
+  float normal_z =  (Particle::colorAt(x, y, z+this->size, n1) - Particle::colorAt(x, y, z-this->size, n2))/this->size;
   vertex_normal = new ThreeDVector(-normal_x, -normal_y, -normal_z);
   vertex_normal->normalize_bang();
   //delete n1;
@@ -199,15 +199,15 @@ ThreeDVector* MarchingCube::pointAt(int corner_index) {
   }
 } 
 
-vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, long double step_size) {
+vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, float step_size) {
   //Get Bounds of the particles
-  extern long double H;
-  long double max_x = -numeric_limits<long double>::max();
-  long double min_x = numeric_limits<long double>::max();
-  long double max_y = -numeric_limits<long double>::max();
-  long double min_y = numeric_limits<long double>::max();
-  long double max_z = -numeric_limits<long double>::max();
-  long double min_z = numeric_limits<long double>::max();
+  extern float H;
+  float max_x = -numeric_limits<float>::max();
+  float min_x = numeric_limits<float>::max();
+  float max_y = -numeric_limits<float>::max();
+  float min_y = numeric_limits<float>::max();
+  float max_z = -numeric_limits<float>::max();
+  float min_z = numeric_limits<float>::max();
 
   for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
     ThreeDVector* particle_pos = (*it)->position;
@@ -221,7 +221,7 @@ vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, 
   }
 
   //Offset bounds by some number so we don't generate cubes that end right on the particle.
-  long double episilon = H;
+  float episilon = H;
   max_x += episilon; min_x -= episilon; max_y += episilon, min_y -= episilon; max_z += episilon, min_z -= episilon;
 
   int num_steps_in_x = ceil((max_x - min_x) / step_size);
@@ -243,9 +243,9 @@ vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, 
 }
 
 /*
-vector<MarchingCube*>* MarchingCube::generateGridFast(ParticleGrid* particle_grid, long double step_size) {
+vector<MarchingCube*>* MarchingCube::generateGridFast(ParticleGrid* particle_grid, float step_size) {
   //Iterate through all grid cells
-  extern long double H;
+  extern float H;
   vector<MarchingCube*>* cubes = new vector<MarchingCube*>;
   for (int x = 0; x < particle_grid->grid_size->x; x++) {
     for (int y = 0; y < particle_grid->grid_size->y; y++) {

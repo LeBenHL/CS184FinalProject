@@ -1,0 +1,1017 @@
+diff --git a/#particle_grid.cpp# b/#particle_grid.cpp#
+index 06396fc..a03509a 100644
+--- a/#particle_grid.cpp#
++++ b/#particle_grid.cpp#
+@@ -5,7 +5,7 @@
+ struct 
+ 
+ ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
+-	extern float H;
++	extern float H;
+ 	this->min_bounds = min_bounds;
+ 
+ 	int x = ceil((max_bounds->x - min_bounds->x)/H);
+@@ -39,7 +39,7 @@ bool ParticleGrid::withInGrid(int x, int y, int z) {
+ }
+ 
+ void ParticleGrid::addToGrid(Particle* particle) {
+-	extern float H;
++	extern float H;
+ 	int x = (particle->position->x - this->min_bounds->x) / H;  
+ 	int y = (particle->position->y - this->min_bounds->y) / H; 
+ 	int z = (particle->position->z - this->min_bounds->z) / H; 
+@@ -51,7 +51,7 @@ void ParticleGrid::addToGrid(Particle* particle) {
+ }
+ 
+ void ParticleGrid::removeFromGrid(Particle* particle) {
+-	extern float H;
++	extern float H;
+ 	int x = (particle->position->x - this->min_bounds->x) / H;  
+ 	int y = (particle->position->y - this->min_bounds->y) / H; 
+ 	int z = (particle->position->z - this->min_bounds->z) / H;
+@@ -66,8 +66,8 @@ vector<Particle*>* ParticleGrid::getNeighbors(Particle* particle) {
+     return getNeighbors(particle->position->x, particle->position->y, particle->position->z);
+ }
+ 
+-vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float pos_z) {
+-    extern float H;
++vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float pos_z) {
++    extern float H;
+     int x = (pos_x - this->min_bounds->x) / H;  
+     int y = (pos_y - this->min_bounds->y) / H; 
+     int z = (pos_z - this->min_bounds->z) / H;
+@@ -102,6 +102,6 @@ void ParticleGrid::clearNeighborsHash_Map() {
+ }
+ 
+ ThreeDVector* ParticleGrid::minCornerOfCell(int x, int y, int z) {
+-	extern float H;
++	extern float H;
+ 	return new ThreeDVector(x * H + this->min_bounds->x, y * H + this->min_bounds->y, z * H + this->min_bounds->z);
+ }
+\ No newline at end of file
+diff --git a/main b/main
+index 46d4f82..82ef660 100755
+Binary files a/main and b/main differ
+diff --git a/main.cpp b/main.cpp
+index 2efe995..50c80c4 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -31,31 +31,31 @@
+ #include "particle_grid.h"
+ 
+ //CONSTANTS
+-float PI = atan(1)*4;
+-float E = 2.7182818284590452353;
++float PI = atan(1)*4;
++float E = 2.7182818284590452353;
+ ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
+-float AMBIENT_TEMP = 25;
+-float TIMESTEP_DURATION =  0.005;
+-float PARTICLE_RADIUS = 0.10;
+-//float H = 0.01;
+-float H = .225;
+-float MARCHING_CUBE_STEP_SIZE = .1;
+-//float MARCHING_CUBE_STEP_SIZE = 2;
+-float ISOVALUE_THRESHOLD = 0.5;
+-
+-float WATER_MASS = 1;
+-float WATER_VICOSITY_COEFFICIENT = 0.01;
+-float WATER_BUOYANCY_STRENGTH = 0.0;
+-float WATER_GAS_CONSTANT = 2;
+-float WATER_REST_DENSITY = 1000;
+-float WATER_TEMP = 25.0;
+-float FOG_MASS = 1.0;
+-float FOG_VICOSITY_COEFFICIENT = 1.0;
+-float FOG_BUOYANCY_STRENGTH = 1.0;
+-float FOG_GAS_CONSTANT = 1.0;
+-float FOG_REST_DENSITY = 1.0;
+-float FOG_TEMP = 1.0;
+-float BOUNDARY_MASS = 20;
++float AMBIENT_TEMP = 25;
++float TIMESTEP_DURATION =  0.005;
++float PARTICLE_RADIUS = 0.10;
++//float H = 0.01;
++float H = .225;
++float MARCHING_CUBE_STEP_SIZE = .1;
++//float MARCHING_CUBE_STEP_SIZE = 2;
++float ISOVALUE_THRESHOLD = 0.5;
++
++float WATER_MASS = 1;
++float WATER_VICOSITY_COEFFICIENT = 0.01;
++float WATER_BUOYANCY_STRENGTH = 0.0;
++float WATER_GAS_CONSTANT = 2;
++float WATER_REST_DENSITY = 1000;
++float WATER_TEMP = 25.0;
++float FOG_MASS = 1.0;
++float FOG_VICOSITY_COEFFICIENT = 1.0;
++float FOG_BUOYANCY_STRENGTH = 1.0;
++float FOG_GAS_CONSTANT = 1.0;
++float FOG_REST_DENSITY = 1.0;
++float FOG_TEMP = 1.0;
++float BOUNDARY_MASS = 20;
+ 
+ //COLORS
+ typedef enum {
+@@ -76,19 +76,19 @@ bool save = false;
+ static const char* file_name;
+ 
+ //Types of Surface Reconstruction
+-bool spheres = false;
++bool spheres = true;
+ bool marching_cubes = true;
+ 
+ //How Many Timesteps we have advanced so far
+-float num_timesteps = 0;
++float num_timesteps = 0;
+ 
+ //Max/Min x,y,z
+-float max_x = numeric_limits<float>::min();
+-float min_x = numeric_limits<float>::max();
+-float max_y = numeric_limits<float>::min();
+-float min_y = numeric_limits<float>::max();
+-float max_z = numeric_limits<float>::min();
+-float min_z = numeric_limits<float>::max();
++float max_x = numeric_limits<float>::min();
++float min_x = numeric_limits<float>::max();
++float max_y = numeric_limits<float>::min();
++float min_y = numeric_limits<float>::max();
++float max_z = numeric_limits<float>::min();
++float min_z = numeric_limits<float>::max();
+ 
+ //Bounding Box
+ ThreeDVector* min_bounds;
+@@ -97,14 +97,14 @@ ThreeDVector* max_bounds;
+ //Grids containing Particles
+ ParticleGrid* particle_grid;
+ 
+-float scale_factor = 1.0/500000.0;
++float scale_factor = 1.0/500000.0;
+ 
+ //Print Function for debugging
+ void print(string _string) {
+   cout << _string << endl;
+ }
+ 
+-void print(float num) {
++void print(float num) {
+   cout << num << endl;
+ }
+ 
+@@ -152,17 +152,17 @@ void parseObj(const char* filename) {
+       //Valid commands:
+       //v x y z [w]
+       else if(!splitline[0].compare("v")) {
+-        float x = atof(splitline[1].c_str());
+-        float y = atof(splitline[2].c_str());
+-        float z = atof(splitline[3].c_str());
++        float x = atof(splitline[1].c_str());
++        float y = atof(splitline[2].c_str());
++        float z = atof(splitline[3].c_str());
+         ThreeDVector* vertex = new ThreeDVector(x, y, z);
+         vertices.push_back(vertex);
+       }
+       //vn x y z
+       else if(!splitline[0].compare("vn")) {
+-        float x = atof(splitline[1].c_str());
+-        float y = atof(splitline[2].c_str());
+-        float z = atof(splitline[3].c_str());
++        float x = atof(splitline[1].c_str());
++        float y = atof(splitline[2].c_str());
++        float z = atof(splitline[3].c_str());
+         ThreeDVector* normal = new ThreeDVector(x, y, z);
+         normal->normalize_bang();
+         vertices_normals.push_back(normal);
+@@ -212,16 +212,16 @@ void parseObj(const char* filename) {
+ //old setBounds
+ /*
+ void setBounds() {
+-  float center_x = (max_x + min_x) / 2;
+-  float center_y = (max_y + min_y) / 2;
+-  float center_z = (max_z + min_z) / 2;
++  float center_x = (max_x + min_x) / 2;
++  float center_y = (max_y + min_y) / 2;
++  float center_z = (max_z + min_z) / 2;
+ 
+-  float transformed_max_x = (max_x - center_x) * scale_factor;
+-  float transformed_min_x = (min_x - center_x) * scale_factor;
+-  float transformed_max_y = (max_y - center_y) * scale_factor;
+-  float transformed_min_y = (min_y - center_y) * scale_factor;
+-  float transformed_max_z = (max_z - center_z) * scale_factor;
+-  float transformed_min_z = (min_z - center_z) * scale_factor;
++  float transformed_max_x = (max_x - center_x) * scale_factor;
++  float transformed_min_x = (min_x - center_x) * scale_factor;
++  float transformed_max_y = (max_y - center_y) * scale_factor;
++  float transformed_min_y = (min_y - center_y) * scale_factor;
++  float transformed_max_z = (max_z - center_z) * scale_factor;
++  float transformed_min_z = (min_z - center_z) * scale_factor;
+ 
+   min_bounds = new ThreeDVector(transformed_min_x * 2, transformed_min_y * 2, transformed_min_z * 10);
+   max_bounds = new ThreeDVector(transformed_max_x * 2, transformed_max_y * 2, transformed_max_z * 10);
+@@ -487,9 +487,9 @@ void myDisplay() {
+   glMatrixMode(GL_MODELVIEW);         // indicate we are specifying camera transformations
+   glLoadIdentity();                   // make sure transformation is "zero'd"
+ 
+-  float center_x = (max_x + min_x) / 2;
+-  float center_y = (max_y + min_y) / 2;
+-  float center_z = (max_z + min_z) / 2;
++  float center_x = (max_x + min_x) / 2;
++  float center_y = (max_y + min_y) / 2;
++  float center_z = (max_z + min_z) / 2;
+   //print((min_y - center_y) * scale_factor);
+ 
+   //gluLookAt(-5, 0, 2.5, -4, 0, 0, 0, 1, 0);
+diff --git a/marching_cube.cpp b/marching_cube.cpp
+index de15c5d..fd6b43c 100644
+--- a/marching_cube.cpp
++++ b/marching_cube.cpp
+@@ -1,7 +1,7 @@
+ #include "marching_cube.h"
+ #include <iostream>
+ 
+-MarchingCube::MarchingCube(ThreeDVector* min_corner, float size) {
++MarchingCube::MarchingCube(ThreeDVector* min_corner, float size) {
+   this->min_corner = min_corner;
+   this->size = size;
+ }
+@@ -10,7 +10,7 @@ MarchingCube::~MarchingCube() {
+   delete this->min_corner; 
+ }
+ 
+-vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(ParticleGrid* particle_grid, float isovalue_threshold) {
++vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(ParticleGrid* particle_grid, float isovalue_threshold) {
+   vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = new vector<vector<pair<ThreeDVector*, ThreeDVector*> > >;
+   vector<Particle*> *n0, *n1, *n2, *n3, *n4, *n5, *n6, *n7;
+   n0 = particle_grid->getNeighbors(min_corner->x, min_corner->y, min_corner->z);
+@@ -22,7 +22,7 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(
+   n6 = particle_grid->getNeighbors(min_corner->x + this->size, min_corner->y + this->size, min_corner->z + this->size);
+   n7 = particle_grid->getNeighbors(min_corner->x, min_corner->y + this->size, min_corner->z + this->size);
+ 
+-  float color_values[8];
++  float color_values[8];
+   color_values[0] =  Particle::colorAt(min_corner->x, min_corner->y, min_corner->z, n0);
+   color_values[1] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z, n1);
+   color_values[2] =  Particle::colorAt(min_corner->x + this->size, min_corner->y, min_corner->z + this->size, n2);
+@@ -109,11 +109,11 @@ vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* MarchingCube::triangulate(
+   return triangles;
+ }
+ 
+-pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, int p2_index, float color_p1, 
+-      float color_p2, float isovalue_threshold, ParticleGrid* particle_grid) {
+-  float x, y, z;
++pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index, int p2_index, float color_p1, 
++      float color_p2, float isovalue_threshold, ParticleGrid* particle_grid) {
++  float x, y, z;
+   vector<Particle*> *n1, *n2;
+-  float epsilon = 0.00001;
++  float epsilon = 0.00001;
+   ThreeDVector* vertex;
+   ThreeDVector* vertex_normal;
+ 
+@@ -126,7 +126,7 @@ pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index,
+   } else {
+     ThreeDVector* point1 = this->pointAt(p1_index);
+     ThreeDVector* point2 = this->pointAt(p2_index);
+-    float multiplier = (isovalue_threshold - color_p1) / (color_p2 - color_p1);
++    float multiplier = (isovalue_threshold - color_p1) / (color_p2 - color_p1);
+     
+     x = point1->x + multiplier * (point2->x - point1->x);
+     y = point1->y + multiplier * (point2->y - point1->y);
+@@ -139,19 +139,19 @@ pair<ThreeDVector*, ThreeDVector*> MarchingCube::interpolatePoint(int p1_index,
+   }
+   n1 = particle_grid->getNeighbors(x+this->size, y, z);
+   n2 = particle_grid->getNeighbors(x-this->size, y, z);
+-  float normal_x =  (Particle::colorAt(x+this->size, y, z, n1) - Particle::colorAt(x-this->size, y, z, n2))/this->size;
++  float normal_x =  (Particle::colorAt(x+this->size, y, z, n1) - Particle::colorAt(x-this->size, y, z, n2))/this->size;
+   //delete n1;
+   //delete n2;
+ 
+   n1 = particle_grid->getNeighbors(x, y+this->size, z);
+   n2 = particle_grid->getNeighbors(x, y-this->size, z);
+-  float normal_y =  (Particle::colorAt(x, y+this->size, z, n1) - Particle::colorAt(x, y-this->size, z, n2))/this->size;
++  float normal_y =  (Particle::colorAt(x, y+this->size, z, n1) - Particle::colorAt(x, y-this->size, z, n2))/this->size;
+   //delete n1;
+   //delete n2;
+ 
+   n1 = particle_grid->getNeighbors(x, y, z+this->size);
+   n2 = particle_grid->getNeighbors(x, y, z-this->size);
+-  float normal_z =  (Particle::colorAt(x, y, z+this->size, n1) - Particle::colorAt(x, y, z-this->size, n2))/this->size;
++  float normal_z =  (Particle::colorAt(x, y, z+this->size, n1) - Particle::colorAt(x, y, z-this->size, n2))/this->size;
+   vertex_normal = new ThreeDVector(-normal_x, -normal_y, -normal_z);
+   vertex_normal->normalize_bang();
+   //delete n1;
+@@ -199,15 +199,15 @@ ThreeDVector* MarchingCube::pointAt(int corner_index) {
+   }
+ } 
+ 
+-vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, float step_size) {
++vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles, float step_size) {
+   //Get Bounds of the particles
+-  extern float H;
+-  float max_x = -numeric_limits<float>::max();
+-  float min_x = numeric_limits<float>::max();
+-  float max_y = -numeric_limits<float>::max();
+-  float min_y = numeric_limits<float>::max();
+-  float max_z = -numeric_limits<float>::max();
+-  float min_z = numeric_limits<float>::max();
++  extern float H;
++  float max_x = -numeric_limits<float>::max();
++  float min_x = numeric_limits<float>::max();
++  float max_y = -numeric_limits<float>::max();
++  float min_y = numeric_limits<float>::max();
++  float max_z = -numeric_limits<float>::max();
++  float min_z = numeric_limits<float>::max();
+ 
+   for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+     ThreeDVector* particle_pos = (*it)->position;
+@@ -221,7 +221,7 @@ vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles,
+   }
+ 
+   //Offset bounds by some number so we don't generate cubes that end right on the particle.
+-  float episilon = H;
++  float episilon = H;
+   max_x += episilon; min_x -= episilon; max_y += episilon, min_y -= episilon; max_z += episilon, min_z -= episilon;
+ 
+   int num_steps_in_x = ceil((max_x - min_x) / step_size);
+@@ -243,9 +243,9 @@ vector<MarchingCube*>* MarchingCube::generateGrid(vector<Particle*>* particles,
+ }
+ 
+ /*
+-vector<MarchingCube*>* MarchingCube::generateGridFast(ParticleGrid* particle_grid, float step_size) {
++vector<MarchingCube*>* MarchingCube::generateGridFast(ParticleGrid* particle_grid, float step_size) {
+   //Iterate through all grid cells
+-  extern float H;
++  extern float H;
+   vector<MarchingCube*>* cubes = new vector<MarchingCube*>;
+   for (int x = 0; x < particle_grid->grid_size->x; x++) {
+     for (int y = 0; y < particle_grid->grid_size->y; y++) {
+diff --git a/marching_cube.h b/marching_cube.h
+index fb32c7a..cddb708 100644
+--- a/marching_cube.h
++++ b/marching_cube.h
+@@ -13,16 +13,16 @@ class MarchingCube {
+ 	//Code From by http://paulbourke.net/geometry/polygonise/
+ 	public:
+ 		ThreeDVector* min_corner;
+-		float size;
++		float size;
+ 
+-		MarchingCube(ThreeDVector* min_corner, float size);
++		MarchingCube(ThreeDVector* min_corner, float size);
+ 		~MarchingCube();
+-		vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangulate(ParticleGrid* particle_grid, float isovalue_threshold);
+-		pair<ThreeDVector*, ThreeDVector*> interpolatePoint(int p1_index, int p2_index, float color_p1, float color_p2, float isovalue_threshold, ParticleGrid* particle_grid);
++		vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangulate(ParticleGrid* particle_grid, float isovalue_threshold);
++		pair<ThreeDVector*, ThreeDVector*> interpolatePoint(int p1_index, int p2_index, float color_p1, float color_p2, float isovalue_threshold, ParticleGrid* particle_grid);
+ 		ThreeDVector* pointAt(int corner_index);
+ 
+-		static vector<MarchingCube*>* generateGrid(vector<Particle*>* particles, float step_size);
+-		//static vector<MarchingCube*>* generateGridFast(ParticleGrid* particle_grid, float step_size);
++		static vector<MarchingCube*>* generateGrid(vector<Particle*>* particles, float step_size);
++		//static vector<MarchingCube*>* generateGridFast(ParticleGrid* particle_grid, float step_size);
+ 
+ 		static const int edgeTable[256];
+ 		static const int triTable[256][16];
+diff --git a/particle.cpp b/particle.cpp
+index aca1087..04a037e 100644
+--- a/particle.cpp
++++ b/particle.cpp
+@@ -6,17 +6,17 @@
+ using namespace std;
+ 
+ //CONSTANTS
+-float p_1 = 16769023.0;
+-float p_2 = 83492791.0;
+-float p_3 = 73856093.0;
++float p_1 = 16769023.0;
++float p_2 = 83492791.0;
++float p_3 = 73856093.0;
+ 
+ //hash function
+ 
+ //prime multiplication method
+ /*unsigned long int hash_simple(ThreeDVector point, ) {
+-  float x = point->x * p_1;
+-  float y = point->y * p_2;
+-  float z = point->z * p_3;
++  float x = point->x * p_1;
++  float y = point->y * p_2;
++  float z = point->z * p_3;
+ 
+   return (unsigned long int) (x ^ y ^ z);
+ }
+@@ -39,22 +39,22 @@ namespace std {
+       using std::size_t;
+       using std::hash;
+ 
+-      float x = k->point->x * p_1;
+-      float y = k->point->y * p_2;
+-      float z = k->point->z * p_3;
++      float x = k->point->x * p_1;
++      float y = k->point->y * p_2;
++      float z = k->point->z * p_3;
+ 
+-      std::size_t h1 = std::hash<float>()(x);
+-      std::size_t h2 = std::hash<float>()(y);
+-      std::size_t h3 = std::hash<float>()(z);
++      std::size_t h1 = std::hash<float>()(x);
++      std::size_t h2 = std::hash<float>()(y);
++      std::size_t h3 = std::hash<float>()(z);
+ 
+       return h1 ^ h2 ^ h3; 
+     }
+   };
+ }
+ 
+-Particle::Particle(float x, float y, float z, float mass, 
+-		ThreeDVector* velocity, float viscosity_coefficient, float buoyancy_strength, 
+-		float gas_constant, float rest_density, float temperature, Particle_Type t) {
++Particle::Particle(float x, float y, float z, float mass, 
++		ThreeDVector* velocity, float viscosity_coefficient, float buoyancy_strength, 
++		float gas_constant, float rest_density, float temperature, Particle_Type t) {
+ 	this->position = new ThreeDVector(x, y, z);
+ 	this->mass = mass;
+ 	this->velocity = velocity;
+@@ -75,8 +75,8 @@ Particle::~Particle() {
+ }
+ 
+ void Particle::set_density(vector<Particle*>* particles) {
+-	extern float H;
+-	float running_sum = 0;
++	extern float H;
++	float running_sum = 0;
+ 	if(this->type != Particle_Boundary){
+ 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+ 			Particle* particle = *it;
+@@ -127,7 +127,7 @@ void Particle::set_acceleration(vector<Particle*>* particles) {
+ 	}
+ }
+ 
+-void Particle::leapfrog_start(float dt) {
++void Particle::leapfrog_start(float dt) {
+ 	if(this->type != Particle_Boundary){
+ 		//Assumes that we have already calculated acceleration for this timestep
+ 		//This is used to initialize the half time step velocities
+@@ -149,7 +149,7 @@ void Particle::leapfrog_start(float dt) {
+ 	}
+ }
+ 
+-void Particle::leapfrog_step(float dt) {
++void Particle::leapfrog_step(float dt) {
+ 	if(this->type != Particle_Boundary){
+ 		//Assumes that we have already calculated acceleration for this timestep
+ 		//This is used to set half step velocities after the initial leapfrog
+@@ -173,14 +173,14 @@ void Particle::leapfrog_step(float dt) {
+ }
+ 
+ ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
+-	extern float H;
++	extern float H;
+ 	ThreeDVector* running_sum = new ThreeDVector();
+ 	if (this->type != Particle_Boundary){
+ 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+ 			Particle* particle = *it;
+ 			if(this->type == particle->type){
+ 				//TODO what is correct value of H?
+-				float multiplier = (particle->mass / particle->density) * Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), H);
++				float multiplier = (particle->mass / particle->density) * Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), H);
+ 				if (multiplier != 0) {
+ 					ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
+ 					velocity_difference->scalar_multiply_bang(multiplier);
+@@ -195,16 +195,16 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
+ }
+ 
+ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
+-	extern float H;
++	extern float H;
+ 	ThreeDVector* running_sum = new ThreeDVector();
+ 	if(this->type != Particle_Boundary){
+-		float my_pressure = this->pressure();
++		float my_pressure = this->pressure();
+ 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+ 			Particle* particle = *it;
+ 			if(this->type == particle->type){
+ 				//TODO what is correct value of H?
+-				float particle_pressure = particle->pressure();
+-				float average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
++				float particle_pressure = particle->pressure();
++				float average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
+ 				ThreeDVector* gradient = Particle::spikyGradientKernel(this->position, particle->position, H);
+ 				gradient->scalar_multiply_bang(average_pressure);
+ 				running_sum->vector_add_bang(gradient);
+@@ -216,7 +216,7 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
+ 	return running_sum;
+ }
+ 
+-float parametric_calculation(float q){
++float parametric_calculation(float q){
+ 	if (q > 0.0 && q < 2.0/3.0){
+ 		return 2.0/3.0;
+ 	}else if (q > 2.0/3.0 && q < 1.0){
+@@ -229,27 +229,27 @@ float parametric_calculation(float q){
+ }
+ 
+ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
+-	extern float H;
+-	extern float WATER_GAS_CONSTANT; //change for fog later
++	extern float H;
++	extern float WATER_GAS_CONSTANT; //change for fog later
+ 	ThreeDVector* running_sum = new ThreeDVector();
+ 	if(this->type != Particle_Boundary){
+ 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+ 			Particle* particle = *it;
+ 			if(particle->type == Particle_Boundary){
+-				float mass_a = this->mass;
+-				float mass_k = particle->mass;
++				float mass_a = this->mass;
++				float mass_k = particle->mass;
+ 
+ 				ThreeDVector* xa_minus_xk = this->position->vector_subtract(particle->position);
+-				float mag_xa_minus_xk = xa_minus_xk->magnitude();
++				float mag_xa_minus_xk = xa_minus_xk->magnitude();
+ 
+-				float q = mag_xa_minus_xk / H;
++				float q = mag_xa_minus_xk / H;
+ 				
+-				float c2 = 100;
++				float c2 = 100;
+ 
+-				float gamma = (0.02*c2)/mag_xa_minus_xk;
++				float gamma = (0.02*c2)/mag_xa_minus_xk;
+ 				gamma *= parametric_calculation(q);
+ 
+-				float constant_factor = ((mass_k/(mass_a + mass_k)) * gamma * this->density) / mag_xa_minus_xk;
++				float constant_factor = ((mass_k/(mass_a + mass_k)) * gamma * this->density) / mag_xa_minus_xk;
+ 
+ 				ThreeDVector* f_force = xa_minus_xk->scalar_multiply(constant_factor);
+ 				running_sum->vector_add_bang(f_force);
+@@ -294,122 +294,122 @@ ThreeDVector* Particle::wind() {
+ 	return new ThreeDVector(0, 0, 0);
+ }
+ 
+-float Particle::pressure() {
++float Particle::pressure() {
+ 	//Assume Pressure is same in all directions?
+-	float pressure = this->gas_constant * (pow(this->density / this->rest_density, 7) - 1);
++	float pressure = this->gas_constant * (pow(this->density / this->rest_density, 7) - 1);
+ 	//cout << this->density / this->rest_density << endl;
+ 	return pressure;
+ }
+ 
+ ThreeDVector* Particle::buoyancy() {
+-	extern float AMBIENT_TEMP;
++	extern float AMBIENT_TEMP;
+ 	extern ThreeDVector* CONSTANT_OF_GRAVITY;
+ 	return CONSTANT_OF_GRAVITY->scalar_multiply(-this->buoyancy_strength * (this->temperature - AMBIENT_TEMP));
+ }
+ 
+ /*
+ bool Particle::isSurfaceParticle(vector<Particle*>* particles) {
+-	float delta = 0.05;
+-	float color = this->colorGradient(particles);
++	float delta = 0.05;
++	float color = this->colorGradient(particles);
+ 	cout << color << endl;
+ 	return (color > (0.5 - delta)) && (color < (0.5 + delta));
+ }*/
+ 
+-float Particle::color(vector<Particle*>* particles) {
++float Particle::color(vector<Particle*>* particles) {
+ 	return Particle::colorAt(this->position, particles);
+ }
+ 
+ /*
+-float Particle::colorGradient(vector<Particle*>* particles) {
+-	float step_size = 0.1;
+-	float x = this->position->x;
+-	float y = this->position->y;
+-	float z = this->position->z;
+-
+-	float graident_x = (this->colorAt(x + step_size, y, z, particles) - this->colorAt(x - step_size, y, z, particles)) / step_size;
+-	float graident_y = (this->colorAt(x, y + step_size, z, particles) - this->colorAt(x - step_size, y - step_size, z, particles)) / step_size;
+-	float graident_z = (this->colorAt(x, y, z + step_size, particles) - this->colorAt(x - step_size, y, z - step_size, particles)) / step_size;
++float Particle::colorGradient(vector<Particle*>* particles) {
++	float step_size = 0.1;
++	float x = this->position->x;
++	float y = this->position->y;
++	float z = this->position->z;
++
++	float graident_x = (this->colorAt(x + step_size, y, z, particles) - this->colorAt(x - step_size, y, z, particles)) / step_size;
++	float graident_y = (this->colorAt(x, y + step_size, z, particles) - this->colorAt(x - step_size, y - step_size, z, particles)) / step_size;
++	float graident_z = (this->colorAt(x, y, z + step_size, particles) - this->colorAt(x - step_size, y, z - step_size, particles)) / step_size;
+ 	ThreeDVector* gradient_vec = new ThreeDVector(graident_x, graident_y, graident_z);
+-	float magnitude = gradient_vec->magnitude();
++	float magnitude = gradient_vec->magnitude();
+ 	delete gradient_vec;
+ 	return magnitude;
+ }*/
+ 
+-float Particle::colorAt(float x, float y, float z, vector<Particle*>* particles) {
++float Particle::colorAt(float x, float y, float z, vector<Particle*>* particles) {
+ 	ThreeDVector* position = new ThreeDVector(x, y, z);
+-	float color = Particle::colorAt(position, particles);
++	float color = Particle::colorAt(position, particles);
+ 	delete position;
+ 	return color;
+ }
+ 
+-float Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
+-	extern float H;
+-	map<ThreeDVector*, float>::const_iterator got = Particle::color_map->find(position);
++float Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
++	extern float H;
++	map<ThreeDVector*, float>::const_iterator got = Particle::color_map->find(position);
+ 	if ( got == Particle::color_map->end() ) {
+-		float running_sum = 0;
++		float running_sum = 0;
+ 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+ 			Particle* particle = *it;
+ 			running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
+ 		}
+-		Particle::color_map->insert(pair<ThreeDVector*, float>(position->clone(), running_sum));
++		Particle::color_map->insert(pair<ThreeDVector*, float>(position->clone(), running_sum));
+ 		return running_sum;
+ 	} else {
+ 		return got->second;
+ 	}
+ }
+ 
+-Particle* Particle::createWaterParticle(float x, float y, float z, ThreeDVector* velocity) {
+-	extern float WATER_MASS;
+-	extern float WATER_VICOSITY_COEFFICIENT;
+-	extern float WATER_BUOYANCY_STRENGTH;
+-	extern float WATER_GAS_CONSTANT;
+-	extern float WATER_REST_DENSITY;
+-	extern float WATER_TEMP;
++Particle* Particle::createWaterParticle(float x, float y, float z, ThreeDVector* velocity) {
++	extern float WATER_MASS;
++	extern float WATER_VICOSITY_COEFFICIENT;
++	extern float WATER_BUOYANCY_STRENGTH;
++	extern float WATER_GAS_CONSTANT;
++	extern float WATER_REST_DENSITY;
++	extern float WATER_TEMP;
+ 	return new Particle(x, y, z, WATER_MASS, velocity, WATER_VICOSITY_COEFFICIENT, WATER_BUOYANCY_STRENGTH, WATER_GAS_CONSTANT, WATER_REST_DENSITY, WATER_TEMP, Particle_Water);
+ }
+ 
+-Particle* Particle::createFogParticle(float x, float y, float z, ThreeDVector* velocity) {
+-	extern float FOG_MASS;
+-	extern float FOG_VICOSITY_COEFFICIENT;
+-	extern float FOG_BUOYANCY_STRENGTH;
+-	extern float FOG_GAS_CONSTANT;
+-	extern float FOG_REST_DENSITY;
+-	extern float FOG_TEMP;
++Particle* Particle::createFogParticle(float x, float y, float z, ThreeDVector* velocity) {
++	extern float FOG_MASS;
++	extern float FOG_VICOSITY_COEFFICIENT;
++	extern float FOG_BUOYANCY_STRENGTH;
++	extern float FOG_GAS_CONSTANT;
++	extern float FOG_REST_DENSITY;
++	extern float FOG_TEMP;
+ 	return new Particle(x, y, z, FOG_MASS, velocity, FOG_VICOSITY_COEFFICIENT, FOG_BUOYANCY_STRENGTH, FOG_GAS_CONSTANT, FOG_REST_DENSITY, FOG_TEMP, Particle_Fog);
+ }
+ 
+-Particle* Particle::createBoundaryParticle(float x, float y, float z, ThreeDVector* velocity) {
+-	extern float BOUNDARY_MASS;
++Particle* Particle::createBoundaryParticle(float x, float y, float z, ThreeDVector* velocity) {
++	extern float BOUNDARY_MASS;
+ 	return new Particle(x, y, z, BOUNDARY_MASS, velocity, 0, 0, 0, 0, 0, Particle_Boundary);
+ }
+ 
+-float Particle::poly6Kernel(float r, float h) {
++float Particle::poly6Kernel(float r, float h) {
+ 	if (r >= 0 && r <= h) {
+-		extern float PI;
+-		float hsquare_minus_rsquare = h * h - r * r;
++		extern float PI;
++		float hsquare_minus_rsquare = h * h - r * r;
+ 		return (315 * hsquare_minus_rsquare * hsquare_minus_rsquare * hsquare_minus_rsquare) / (64 * PI * pow(h, 9));
+ 	} else {
+ 		return 0;
+ 	}
+ }
+ 
+-float Particle::viscosityGradientSquaredKernel(float r, float h) {
++float Particle::viscosityGradientSquaredKernel(float r, float h) {
+ 	if (r >= 0 && r <= h) {
+-		extern float PI;
++		extern float PI;
+ 		return (45 * (h - r)) / (PI * pow(h, 6));
+ 	} else {
+ 		return 0;
+ 	}
+ }
+ 
+-ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h) {
+-	float mag = r->distance(r_particle);
++ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h) {
++	float mag = r->distance(r_particle);
+ 	if (mag >= 0 && mag <= h) {
+ 		ThreeDVector* delta = r->vector_subtract(r_particle);
+-		extern float PI;
++		extern float PI;
+ 		//Normalize Vector
+ 		delta->scalar_multiply_bang(1/mag);
+-		float h_minus_mag = h - mag;
++		float h_minus_mag = h - mag;
+ 		delta->scalar_multiply_bang(-((45 * h_minus_mag * h_minus_mag) / (PI * pow(h, 6))));
+ 		return delta;
+ 	} else {
+@@ -418,13 +418,13 @@ ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_par
+ }
+ 
+ void Particle::clearColorMap() {
+-	for(map<ThreeDVector*, float, comparator>::iterator it = Particle::color_map->begin(); it != Particle::color_map->end(); it++) {
++	for(map<ThreeDVector*, float, comparator>::iterator it = Particle::color_map->begin(); it != Particle::color_map->end(); it++) {
+ 	    delete it->first;
+ 	}
+ 	Particle::color_map->clear();
+ }
+ 
+-map<ThreeDVector*, float, comparator>* Particle::color_map = new map<ThreeDVector*, float, comparator>;
++map<ThreeDVector*, float, comparator>* Particle::color_map = new map<ThreeDVector*, float, comparator>;
+ 
+ 
+ 
+diff --git a/particle.h b/particle.h
+index 962c77d..805b25b 100644
+--- a/particle.h
++++ b/particle.h
+@@ -19,39 +19,39 @@ typedef enum {
+ class Particle {
+ 	public:
+ 		ThreeDVector* position;
+-		float mass;
++		float mass;
+ 		ThreeDVector* velocity;
+ 		ThreeDVector* velocity_half;
+-		float viscosity_coefficient;
+-		float gas_constant;
+-		float buoyancy_strength;
+-		float rest_density;
+-		float temperature;
++		float viscosity_coefficient;
++		float gas_constant;
++		float buoyancy_strength;
++		float rest_density;
++		float temperature;
+ 
+ 		 Particle_Type type;
+ 
+-		static map<ThreeDVector*, float, comparator>* color_map;
++		static map<ThreeDVector*, float, comparator>* color_map;
+ 
+ 		//Interpolated Fields
+-		float density;
++		float density;
+ 		ThreeDVector* acceleration;
+ 
+-		Particle(float x, float y, float z, float mass, 
+-			ThreeDVector* velocity, float viscosity_coefficient, float buoyancy_strength, 
+-			float gas_constant, float rest_density, float temperature, Particle_Type t);
++		Particle(float x, float y, float z, float mass, 
++			ThreeDVector* velocity, float viscosity_coefficient, float buoyancy_strength, 
++			float gas_constant, float rest_density, float temperature, Particle_Type t);
+ 		~Particle();
+ 		void set_density(vector<Particle*>* particles);
+ 		void set_acceleration(vector<Particle*>* particles);
+ 
+ 		//Leapfrog steps from http://www.cs.cornell.edu/~bindel/class/cs5220-f11/code/sph.pdf
+-		void leapfrog_start(float dt);
+-		void leapfrog_step(float dt);
++		void leapfrog_start(float dt);
++		void leapfrog_step(float dt);
+ 		
+ 		
+ 		ThreeDVector* viscosityForce(vector<Particle*>* particles);
+ 		ThreeDVector* pressureForce(vector<Particle*>* particles);
+ 		ThreeDVector* boundaryForce(vector<Particle*>* particles);
+-		float pressure();
++		float pressure();
+ 		ThreeDVector* externalForce();
+ 		ThreeDVector* gravity();
+ 		ThreeDVector* wind();
+@@ -59,25 +59,25 @@ class Particle {
+ 
+ 		//bool isSurfaceParticle(vector<Particle*>* particles);
+ 
+-		float color(vector<Particle*>* particles);
+-		//float colorGradient(vector<Particle*>* particles);
++		float color(vector<Particle*>* particles);
++		//float colorGradient(vector<Particle*>* particles);
+ 
+-		static float colorAt(ThreeDVector* position, vector<Particle*>* particles);
+-		static float colorAt(float x, float y, float z, vector<Particle*>* particles);
++		static float colorAt(ThreeDVector* position, vector<Particle*>* particles);
++		static float colorAt(float x, float y, float z, vector<Particle*>* particles);
+ 
+-		static Particle* createWaterParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
+-		static Particle* createFogParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
+-		static Particle* createBoundaryParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
++		static Particle* createWaterParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
++		static Particle* createFogParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
++		static Particle* createBoundaryParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
+ 
+ 
+ 		//Poly 6 Kernel from http://www.matthiasmueller.info/publications/sca03.pdf
+-		static float poly6Kernel(float r, float h);
++		static float poly6Kernel(float r, float h);
+ 
+ 		//Vicosity Kernel from http://www.matthiasmueller.info/publications/sca03.pdf
+-		static float viscosityGradientSquaredKernel(float r, float h);
++		static float viscosityGradientSquaredKernel(float r, float h);
+ 
+ 		//Spiky Kernel from http://www.matthiasmueller.info/publications/sca03.pdf
+-		static ThreeDVector* spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h);
++		static ThreeDVector* spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h);
+ 
+ 		static void clearColorMap();
+ 
+diff --git a/particle_grid.cpp b/particle_grid.cpp
+index a380730..c4d0d40 100644
+--- a/particle_grid.cpp
++++ b/particle_grid.cpp
+@@ -2,7 +2,7 @@
+ #include <iostream>
+ 
+ ParticleGrid::ParticleGrid(ThreeDVector* min_bounds, ThreeDVector* max_bounds) {
+-    extern float H;
++    extern float H;
+     this->min_bounds = min_bounds;
+ 
+     int x = ceil((max_bounds->x - min_bounds->x)/H);
+@@ -60,7 +60,7 @@ void ParticleGrid::addToGrid(Particle* particle) {
+ }
+ 
+ bool ParticleGrid::registerGridPos(Particle* particle) {
+-    extern float H;
++    extern float H;
+     int x = (particle->position->x - this->min_bounds->x) / H;  
+     int y = (particle->position->y - this->min_bounds->y) / H; 
+     int z = (particle->position->z - this->min_bounds->z) / H; 
+@@ -76,7 +76,7 @@ bool ParticleGrid::registerGridPos(Particle* particle) {
+ }
+ 
+ bool ParticleGrid::unregisterGridPos(Particle* particle) {
+-    extern float H;
++    extern float H;
+     int x = (particle->position->x - this->min_bounds->x) / H;  
+     int y = (particle->position->y - this->min_bounds->y) / H; 
+     int z = (particle->position->z - this->min_bounds->z) / H;
+@@ -114,8 +114,8 @@ vector<Particle*>* ParticleGrid::getNeighbors(Particle* particle) {
+     return getNeighbors(particle->position->x, particle->position->y, particle->position->z);
+ }
+ 
+-vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float pos_z) {
+-    extern float H;
++vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float pos_z) {
++    extern float H;
+     int x = (pos_x - this->min_bounds->x) / H;  
+     int y = (pos_y - this->min_bounds->y) / H; 
+     int z = (pos_z - this->min_bounds->z) / H;
+@@ -150,6 +150,6 @@ void ParticleGrid::clearNeighborsMap() {
+ }
+ 
+ ThreeDVector* ParticleGrid::minCornerOfCell(int x, int y, int z) {
+-    extern float H;
++    extern float H;
+     return new ThreeDVector(x * H + this->min_bounds->x, y * H + this->min_bounds->y, z * H + this->min_bounds->z);
+ }
+\ No newline at end of file
+diff --git a/particle_grid.h b/particle_grid.h
+index 1e44105..3d06ef1 100644
+--- a/particle_grid.h
++++ b/particle_grid.h
+@@ -27,7 +27,7 @@ class ParticleGrid {
+ 		bool withInGrid(int x, int y, int z);
+ 		bool registerGridPos(Particle* particle);
+ 		vector<Particle*>* getNeighbors(Particle* particle);
+-		vector<Particle*>* getNeighbors(float pos_x, float pos_y, float pos_z);
++		vector<Particle*>* getNeighbors(float pos_x, float pos_y, float pos_z);
+ 		void removeFromGrid(Particle* particle, bool unregister=true);
+ 		bool unregisterGridPos(Particle* particle);
+ 		void clearNeighborsMap();
+diff --git a/three_d_vector.cpp b/three_d_vector.cpp
+index c36210b..516fd52 100644
+--- a/three_d_vector.cpp
++++ b/three_d_vector.cpp
+@@ -5,22 +5,22 @@
+ #include <cfloat>
+ using namespace std;
+ 
+-ThreeDVector::ThreeDVector(float _x, float _y, float _z) {
++ThreeDVector::ThreeDVector(float _x, float _y, float _z) {
+ 	x = _x;
+ 	y = _y;
+ 	z = _z;
+ }
+ 
+-float ThreeDVector::magnitude(){
+-	float x = this->x;
+-	float y = this->y;
+-	float z = this->z;
++float ThreeDVector::magnitude(){
++	float x = this->x;
++	float y = this->y;
++	float z = this->z;
+ 	return sqrt(x*x+y*y+z*z);
+ }
+ 
+ ThreeDVector* ThreeDVector::normalize(){
+ 	//cout << "BEFORE: " << this->x << ", " << this->y << ", " << this->z << endl;
+-	float mag = magnitude();
++	float mag = magnitude();
+ 	if (mag == 0) {
+ 		return new ThreeDVector();
+ 	} else {
+@@ -31,7 +31,7 @@ ThreeDVector* ThreeDVector::normalize(){
+ 
+ void ThreeDVector::normalize_bang(){
+ 	//cout << "BEFORE: " << this->x << ", " << this->y << ", " << this->z << endl;
+-	float mag = magnitude();
++	float mag = magnitude();
+ 	if (mag != 0) {
+ 		this->x /= mag;
+ 		this->y /= mag;
+@@ -42,16 +42,16 @@ void ThreeDVector::normalize_bang(){
+ 
+ 
+ 
+-float ThreeDVector::dot_product(ThreeDVector* v){
++float ThreeDVector::dot_product(ThreeDVector* v){
+ 	return this->x * v->x + this->y * v->y + this->z * v->z;
+ }
+ 
+ 
+-ThreeDVector* ThreeDVector::scalar_multiply(float k){	
++ThreeDVector* ThreeDVector::scalar_multiply(float k){	
+ 	return new ThreeDVector(this->x * k, this->y * k, this->z * k);
+ }
+ 
+-void ThreeDVector::scalar_multiply_bang(float k){	
++void ThreeDVector::scalar_multiply_bang(float k){	
+ 	this->x *= k;
+ 	this->y *= k;
+ 	this->z *= k;
+@@ -79,10 +79,10 @@ ThreeDVector* ThreeDVector::cross_product(ThreeDVector* v){
+ 	return new ThreeDVector(this->y * v->z - this->z * v->y, this->z * v->x - this->x * v->z, this->x * v->y - this->y * v->x);                                                                         
+ }
+ 
+-float ThreeDVector::distance(ThreeDVector* v) {
+-	float delta_x = this->x - v->x;
+-	float delta_y = this->y - v->y;
+-	float delta_z = this->z - v->z;
++float ThreeDVector::distance(ThreeDVector* v) {
++	float delta_x = this->x - v->x;
++	float delta_y = this->y - v->y;
++	float delta_z = this->z - v->z;
+ 	return sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z);
+ }
+ 
+@@ -134,9 +134,9 @@ namespace std
+     public:
+         std::size_t operator()(ThreeDVector const& v) const 
+         {
+-            return ((hash<float>()(v.x)
+-               ^ (hash<float>()(v.y) << 1)) >> 1)
+-               ^ (hash<float>()(v.z) << 1);
++            return ((hash<float>()(v.x)
++               ^ (hash<float>()(v.y) << 1)) >> 1)
++               ^ (hash<float>()(v.z) << 1);
+         }
+     };
+ }*/
+diff --git a/three_d_vector.h b/three_d_vector.h
+index d7c2677..ce44f9f 100644
+--- a/three_d_vector.h
++++ b/three_d_vector.h
+@@ -5,22 +5,22 @@ using namespace std;
+ 
+ class ThreeDVector{
+ 	public:
+-		float x;
+-		float y;
+-		float z;
+-		ThreeDVector(float=0, float=0, float=0);
+-		float magnitude();
++		float x;
++		float y;
++		float z;
++		ThreeDVector(float=0, float=0, float=0);
++		float magnitude();
+ 		ThreeDVector* normalize();
+ 		void normalize_bang();
+-		float dot_product(ThreeDVector*);
+-		ThreeDVector* scalar_multiply(float k);
+-		void scalar_multiply_bang(float k);
++		float dot_product(ThreeDVector*);
++		ThreeDVector* scalar_multiply(float k);
++		void scalar_multiply_bang(float k);
+ 		ThreeDVector* vector_add(ThreeDVector*);
+ 		void vector_add_bang(ThreeDVector*);
+ 		ThreeDVector* vector_subtract(ThreeDVector*);
+ 		ThreeDVector* vector_multiply(ThreeDVector*);
+ 		ThreeDVector* cross_product(ThreeDVector*);
+-		float distance(ThreeDVector*);
++		float distance(ThreeDVector*);
+ 		ThreeDVector* midpoint(ThreeDVector*);
+ 		ThreeDVector* clone();
+ 		void transform_bang(Eigen::Matrix4f transformation, bool point);
