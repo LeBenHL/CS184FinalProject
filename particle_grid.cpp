@@ -126,8 +126,8 @@ vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float po
     int y = (pos_y - this->min_bounds->y) / H; 
     int z = (pos_z - this->min_bounds->z) / H;
 
-    ThreeDVector* position = new ThreeDVector(x, y, z);
-    map<ThreeDVector*, vector<Particle*>*>::const_iterator got = this->neighbors_map->find(position);
+    ThreeDVector position = ThreeDVector(x, y, z);
+    map<ThreeDVector*, vector<Particle*>*>::const_iterator got = this->neighbors_map->find(&position);
     if ( got == this->neighbors_map->end() ) { 
         vector<Particle*>* neighbors = new vector<Particle*>;
         for (int i = -1; i <= 1; i++) {
@@ -140,10 +140,9 @@ vector<Particle*>* ParticleGrid::getNeighbors(float pos_x, float pos_y, float po
             }
         }
         #pragma omp critical(neighborsMapInsert) 
-        this->neighbors_map->insert(pair<ThreeDVector*, vector<Particle*>*>(position, neighbors));
+        this->neighbors_map->insert(pair<ThreeDVector*, vector<Particle*>*>(position.clone(), neighbors));
         return neighbors;
     } else {
-        delete position;
         return got->second;
     }
 }

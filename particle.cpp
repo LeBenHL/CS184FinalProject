@@ -177,10 +177,9 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
 				//TODO what is correct value of H?
 				float multiplier = (particle->mass / particle->density) * Particle::viscosityGradientSquaredKernel(this->position->distance(particle->position), H);
 				if (multiplier != 0) {
-					ThreeDVector* velocity_difference = particle->velocity->vector_subtract(this->velocity);
-					velocity_difference->scalar_multiply_bang(multiplier);
-					running_sum->vector_add_bang(velocity_difference);
-					delete velocity_difference;
+					ThreeDVector velocity_difference = ThreeDVector(particle->velocity->x - this->velocity->x, particle->velocity->y - this->velocity->y, particle->velocity->z - this->velocity->z);
+					velocity_difference.scalar_multiply_bang(multiplier);
+					running_sum->vector_add_bang(&velocity_difference);
 				}
 			}
 		}
@@ -198,13 +197,12 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 			Particle* particle = *it;
 			if(this->type == particle->type){
 				//TODO what is correct value of H?
-				ThreeDVector* gradient = Particle::spikyGradientKernel(this->position, particle->position, H);
-				if (gradient) {
+				ThreeDVector gradient;
+				if (Particle::spikyGradientKernel(this->position, particle->position, H, &gradient)) {
 					float particle_pressure = particle->pressure();
 					float average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
-					gradient->scalar_multiply_bang(average_pressure);
-					running_sum->vector_add_bang(gradient);
-					delete gradient;
+					gradient.scalar_multiply_bang(average_pressure);
+					running_sum->vector_add_bang(&gradient);
 				}
 			}
 		}
@@ -236,8 +234,8 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 				float mass_a = this->mass;
 				float mass_k = particle->mass;
 
-				ThreeDVector* xa_minus_xk = this->position->vector_subtract(particle->position);
-				float mag_xa_minus_xk = xa_minus_xk->magnitude();
+				ThreeDVector xa_minus_xk = ThreeDVector(this->position->x - particle->position->x, this->position->y - particle->position->y, this->position->z - particle->position->z);
+				float mag_xa_minus_xk = xa_minus_xk.magnitude();
 
 				float q = mag_xa_minus_xk / H;
 				
@@ -248,8 +246,8 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 
 				float constant_factor = ((mass_k/(mass_a + mass_k)) * gamma * this->density) / mag_xa_minus_xk;
 
-				xa_minus_xk->scalar_multiply_bang(constant_factor);
-				running_sum->vector_add_bang(xa_minus_xk);
+				xa_minus_xk.scalar_multiply_bang(constant_factor);
+				running_sum->vector_add_bang(&xa_minus_xk);
 				//cout << c2 << endl;
 				//cout << (mass_k/(mass_a + mass_k)) << endl;
 				//cout << gamma << endl;
@@ -257,7 +255,6 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 				//cout << xa_minus_xk->repr() << endl;
 				//cout << f_force->repr() << endl; 
 
-				delete xa_minus_xk;
 			}
 		}
 	}
@@ -332,9 +329,8 @@ float Particle::colorGradient(vector<Particle*>* particles) {
 }*/
 
 float Particle::colorAt(float x, float y, float z, vector<Particle*>* particles) {
-	ThreeDVector* position = new ThreeDVector(x, y, z);
-	float color = Particle::colorAt(position, particles);
-	delete position;
+	ThreeDVector position = ThreeDVector(x, y, z);
+	float color = Particle::colorAt(&position, particles);
 	return color;
 }
 
@@ -399,18 +395,21 @@ float Particle::viscosityGradientSquaredKernel(float r, float h) {
 	}
 }
 
-ThreeDVector* Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h) {
+bool Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h, ThreeDVector* gradient) {
 	float mag = r->distance(r_particle);
 	if (mag >= 0 && mag <= h) {
-		ThreeDVector* delta = r->vector_subtract(r_particle);
+		ThreeDVector delta = ThreeDVector(r->x - r_particle->x, r->y - r_particle->y, r->z - r_particle->z);
 		extern float PI;
 		//Normalize Vector
 		if (mag != 0) {
-			delta->scalar_multiply_bang(1/mag);
+			delta.scalar_multiply_bang(1/mag);
 		}
 		float h_minus_mag = h - mag;
-		delta->scalar_multiply_bang(-((45 * h_minus_mag * h_minus_mag) / (PI * pow(h, 6))));
-		return delta;
+		delta.scalar_multiply_bang(-((45 * h_minus_mag * h_minus_mag) / (PI * pow(h, 6))));
+		gradient->x = delta.x;
+		gradient->y = delta.y;
+		gradient->z = delta.z;
+		return true;
 	} else {
 		return false;
 	}

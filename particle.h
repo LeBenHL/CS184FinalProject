@@ -77,7 +77,7 @@ class Particle {
 		static float viscosityGradientSquaredKernel(float r, float h);
 
 		//Spiky Kernel from http://www.matthiasmueller.info/publications/sca03.pdf
-		static ThreeDVector* spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h);
+		static bool spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, float h, ThreeDVector* gradient);
 
 		static void clearColorMap();
 
