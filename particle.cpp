@@ -1,7 +1,7 @@
 #include <cmath>
 #include "particle.h"
 #include <iostream>
-#include <unordered_map>
+//#include <unordered_map>
 
 using namespace std;
 
@@ -31,6 +31,7 @@ struct Key {
 
 };
 
+/*
 namespace std {
   template <>
   struct hash<Key> {
@@ -50,7 +51,7 @@ namespace std {
       return h1 ^ h2 ^ h3; 
     }
   };
-}
+}*/
 
 Particle::Particle(float x, float y, float z, float mass, 
 		ThreeDVector* velocity, float viscosity_coefficient, float buoyancy_strength, 
@@ -214,9 +215,9 @@ float parametric_calculation(float q){
 	if (q > 0.0 && q < 2.0/3.0){
 		return 2.0/3.0;
 	}else if (q > 2.0/3.0 && q < 1.0){
-		return 2.0*q - (3.0/2.0)*pow(q, 2.0);
+		return 2.0*q - (3.0/2.0)*q*q;
 	}else if(q > 1.0 && q < 2.0){
-		return (1.0/2.0)*pow(2.0-q, 2.0);
+		return (1.0/2.0)*(2.0-q)*(2.0-q);
 	}else{
 		return 0.0;
 	}
