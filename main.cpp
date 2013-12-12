@@ -480,6 +480,7 @@ void marchingCubes(vector<Particle*>* particles) {
   //vector<MarchingCube*>* cubes = MarchingCube::generateGridFast(particle_grid, MARCHING_CUBE_STEP_SIZE);
   vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = new vector<vector<pair<ThreeDVector*, ThreeDVector*> > >;
 
+  #pragma omp parallel for
   for(int i = 0; i < cubes->size(); ++i) {
     MarchingCube* cube = cubes->at(i);
     //char* buffer = new char[1000];
