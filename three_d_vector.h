@@ -20,6 +20,7 @@ class ThreeDVector{
 		ThreeDVector* vector_multiply(ThreeDVector*);
 		ThreeDVector* cross_product(ThreeDVector*);
 		float distance(ThreeDVector*);
+		float distance(float x, float y, float z);
 		ThreeDVector* midpoint(ThreeDVector*);
 		ThreeDVector* clone();
 		char* repr();

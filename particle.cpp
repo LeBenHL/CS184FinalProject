@@ -248,8 +248,8 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 
 				float constant_factor = ((mass_k/(mass_a + mass_k)) * gamma * this->density) / mag_xa_minus_xk;
 
-				ThreeDVector* f_force = xa_minus_xk->scalar_multiply(constant_factor);
-				running_sum->vector_add_bang(f_force);
+				xa_minus_xk->scalar_multiply_bang(constant_factor);
+				running_sum->vector_add_bang(xa_minus_xk);
 				//cout << c2 << endl;
 				//cout << (mass_k/(mass_a + mass_k)) << endl;
 				//cout << gamma << endl;
@@ -257,7 +257,6 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 				//cout << xa_minus_xk->repr() << endl;
 				//cout << f_force->repr() << endl; 
 
-				delete f_force;
 				delete xa_minus_xk;
 			}
 		}
