@@ -35,20 +35,20 @@ float PI = atan(1)*4;
 float E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 float AMBIENT_TEMP = 25;
-float TIMESTEP_DURATION =  0.005;
+float TIMESTEP_DURATION =  0.01;
 float PARTICLE_RADIUS = 0.1;
 //float H = 0.01;
-float H = .2;
+float H = .225;
 float MARCHING_CUBE_STEP_SIZE = .1;
 //float MARCHING_CUBE_STEP_SIZE = 2;
 float ISOVALUE_THRESHOLD = 0.5;
 
-float WATER_MASS = 1.2;
-float WATER_VICOSITY_COEFFICIENT = 0.1;
-float WATER_BUOYANCY_STRENGTH = 0.0;
-float WATER_GAS_CONSTANT = 300;
-float WATER_REST_DENSITY = 1000;
-float WATER_TEMP = 25.0;
+float WATER_MASS = 1.0;
+float WATER_VICOSITY_COEFFICIENT = 1;
+float WATER_BUOYANCY_STRENGTH = 0.01;
+float WATER_GAS_CONSTANT = 500;
+float WATER_REST_DENSITY = 700;
+float WATER_TEMP = 30.0;
 float FOG_MASS = 1.0;
 float FOG_VICOSITY_COEFFICIENT = 1.0;
 float FOG_BUOYANCY_STRENGTH = 1.0;
@@ -76,7 +76,7 @@ bool save = false;
 static const char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = true;
+bool spheres = false;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
@@ -692,9 +692,9 @@ int main(int argc, char *argv[]) {
   //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -10; x <10; x++) {
-    for (int y = -5; y <5; y++) {
-      for (int z = -10; z <10; z++) {
+  for (int x = -12; x <12; x++) {
+    for (int y = -3; y <7; y++) {
+      for (int z = -12; z <12; z++) {
         Particle* water = Particle::createWaterParticle(x * .1, y * .1 - 0.5 , z * .1);
         particle_grid->addToGrid(water);
       }
