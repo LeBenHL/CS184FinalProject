@@ -1,6 +1,5 @@
 #ifndef THREEDVECTOR_H
 #define THREEDVECTOR_H
-#include <Eigen/Dense>
 using namespace std;
 
 class ThreeDVector{
@@ -23,7 +22,6 @@ class ThreeDVector{
 		float distance(ThreeDVector*);
 		ThreeDVector* midpoint(ThreeDVector*);
 		ThreeDVector* clone();
-		void transform_bang(Eigen::Matrix4f transformation, bool point);
 		char* repr();
 		char* print();
 		bool operator==(const ThreeDVector &other) const;
