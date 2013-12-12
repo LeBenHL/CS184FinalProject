@@ -744,38 +744,38 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  for (int x = -30; x < 30; x++) {
-    for (int z = -30; z < 30; z++) {
-      Particle* boundary = Particle::createBoundaryParticle(x * .1, -1, z * .1);
+  for (int x = -60; x < 60; x++) {
+    for (int z = -60; z < 60; z++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .05, -1, z * .05);
       particle_grid->addToGrid(boundary);
     }
   }
 
-  for (int y = -30; y < 30; y++) {
-    for (int x = -30; x < 30; x++) {
-      Particle* boundary = Particle::createBoundaryParticle(x * .1, y * 0.1, -3);
+  for (int y = -60; y < 60; y++) {
+    for (int x = -60; x < 60; x++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .05, y * 0.05, -3);
       particle_grid->addToGrid(boundary);
     }      
   }
 
-  for (int y = -30; y < 30; y++) {
-    for (int x = -30; x < 30; x++) {      
-      Particle* boundary = Particle::createBoundaryParticle(x * 0.1, y * 0.1, 3);
+  for (int y = -60; y < 60; y++) {
+    for (int x = -60; x < 60; x++) {      
+      Particle* boundary = Particle::createBoundaryParticle(x * 0.05, y * 0.05, 3);
       particle_grid->addToGrid(boundary);
     }
   }
 
-  for (int z = -30; z < 30; z++) {
-    for (int y = -30; y < 30; y++) {
-      Particle* boundary = Particle::createBoundaryParticle(-3,  y * 0.1, z * 0.1);
+  for (int z = -60; z < 60; z++) {
+    for (int y = -60; y < 60; y++) {
+      Particle* boundary = Particle::createBoundaryParticle(-3,  y * 0.05, z * 0.05);
       particle_grid->addToGrid(boundary);
 
     }
   }
 
-  for (int z = -30; z < 30; z++) {
-    for (int y = -30; y < 30; y++) {
-      Particle* boundary = Particle::createBoundaryParticle(3, y * 0.1, z * 0.1);
+  for (int z = -60; z < 60; z++) {
+    for (int y = -60; y < 60; y++) {
+      Particle* boundary = Particle::createBoundaryParticle(3, y * 0.05, z * 0.05);
       particle_grid->addToGrid(boundary);
     }      
   }
