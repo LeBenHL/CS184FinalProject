@@ -150,20 +150,17 @@ void Particle::leapfrog_step(float dt) {
 		//This is used to set half step velocities after the initial leapfrog
 
 		//Set Half Step Velocity
-		ThreeDVector* a_dt = this->acceleration->scalar_multiply(dt);
-		this->velocity_half->vector_add_bang(a_dt);
-		delete a_dt;
+		ThreeDVector a_dt = ThreeDVector(this->acceleration->x * dt, this->acceleration->y * dt, this->acceleration->z * dt);
+		this->velocity_half->vector_add_bang(&a_dt);
 
 		//Set Full Step Velocity For acceleration calculations
-		ThreeDVector* a_dt_over_2 = this->acceleration->scalar_multiply(dt/2);
+		ThreeDVector a_dt_over_2 = ThreeDVector(this->acceleration->x * dt/2, this->acceleration->y * dt/2, this->acceleration->z * dt/2);
 		delete this->velocity;
-		this->velocity = this->velocity_half->vector_add(a_dt_over_2);
-		delete a_dt_over_2;
+		this->velocity = this->velocity_half->vector_add(&a_dt_over_2);
 
 		//Set Full Step Position
-		ThreeDVector* v_dt = this->velocity_half->scalar_multiply(dt);
-		this->position->vector_add_bang(v_dt);
-		delete v_dt;
+		ThreeDVector v_dt = ThreeDVector(this->velocity_half->x * dt, this->velocity_half->y * dt, this->velocity_half->z * dt);
+		this->position->vector_add_bang(&v_dt);
 	}
 }
 
@@ -263,28 +260,22 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 
 ThreeDVector* Particle::externalForce() {
 	ThreeDVector* external_force = new ThreeDVector();
-	ThreeDVector* gravity = this->gravity();
-	ThreeDVector* wind = this->wind();
-	ThreeDVector* buoyancy = this->buoyancy();
-
-	external_force->vector_add_bang(gravity);
-	external_force->vector_add_bang(wind);
-	external_force->vector_add_bang(buoyancy);
-
-	delete gravity;
-	delete wind;
-	delete buoyancy;
+	this->addGravity(external_force);
+	this->addWind(external_force);
+	this->addBuoyancy(external_force);
 
 	return external_force;
 }
 
-ThreeDVector* Particle::gravity() {
+void Particle::addGravity(ThreeDVector* vector) {
 	extern ThreeDVector* CONSTANT_OF_GRAVITY;
-	return CONSTANT_OF_GRAVITY->scalar_multiply(this->density);
+	ThreeDVector gravity = ThreeDVector(CONSTANT_OF_GRAVITY->x * this->density, CONSTANT_OF_GRAVITY->y * this->density, CONSTANT_OF_GRAVITY->z * this->density);
+	vector->vector_add_bang(&gravity);
 }
 
-ThreeDVector* Particle::wind() {
-	return new ThreeDVector(0, 0, 0);
+void Particle::addWind(ThreeDVector* vector) {
+	ThreeDVector wind = ThreeDVector();
+	vector->vector_add_bang(&wind);
 }
 
 float Particle::pressure() {
@@ -294,10 +285,12 @@ float Particle::pressure() {
 	return pressure;
 }
 
-ThreeDVector* Particle::buoyancy() {
+void Particle::addBuoyancy(ThreeDVector* vector) {
 	extern float AMBIENT_TEMP;
 	extern ThreeDVector* CONSTANT_OF_GRAVITY;
-	return CONSTANT_OF_GRAVITY->scalar_multiply(-this->buoyancy_strength * (this->temperature - AMBIENT_TEMP));
+	float multiplier = -this->buoyancy_strength * (this->temperature - AMBIENT_TEMP);
+	ThreeDVector buoyancy = ThreeDVector(CONSTANT_OF_GRAVITY->x * multiplier, CONSTANT_OF_GRAVITY->y * multiplier, CONSTANT_OF_GRAVITY->z * multiplier);
+	vector->vector_add_bang(&buoyancy);
 }
 
 /*

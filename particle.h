@@ -53,9 +53,9 @@ class Particle {
 		ThreeDVector* boundaryForce(vector<Particle*>* particles);
 		float pressure();
 		ThreeDVector* externalForce();
-		ThreeDVector* gravity();
-		ThreeDVector* wind();
-		ThreeDVector* buoyancy();
+		void addGravity(ThreeDVector* vector);
+		void addWind(ThreeDVector* vector);
+		void addBuoyancy(ThreeDVector* vector);
 
 		//bool isSurfaceParticle(vector<Particle*>* particles);
 

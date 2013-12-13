@@ -36,7 +36,7 @@ float PI = atan(1)*4;
 float E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 float AMBIENT_TEMP = 25;
-float TIMESTEP_DURATION =  0.0125;
+float TIMESTEP_DURATION =  0.001;
 float PARTICLE_RADIUS = 0.04;
 //float H = 0.01;
 float H = .225;
@@ -597,9 +597,9 @@ void myDisplay() {
   glNormal3f(1, 0, 0);
   glVertex3f(-3, -1, -3);
   glNormal3f(1, 0, 0);
-  glVertex3f(-3, 1, -3);
+  glVertex3f(-3, 3, -3);
   glNormal3f(1, 0, 0);
-  glVertex3f(-3, 1, 3);
+  glVertex3f(-3, 3, 3);
   glNormal3f(1, 0, 0);
   glVertex3f(-3, -1, 3);
   glEnd();
@@ -608,9 +608,9 @@ void myDisplay() {
   glNormal3f(-1, 0, 0);
   glVertex3f(3, -1, -3);
   glNormal3f(-1, 0, 0);
-  glVertex3f(3, 1, -3);
+  glVertex3f(3, 3, -3);
   glNormal3f(-1, 0, 0);
-  glVertex3f(3, 1, 3);
+  glVertex3f(3, 3, 3);
   glNormal3f(-1, 0, 0);
   glVertex3f(3, -1, 3);
   glEnd();
@@ -619,9 +619,9 @@ void myDisplay() {
   glNormal3f(0, 0, -1);
   glVertex3f(-3, -1, 3);
   glNormal3f(0, 0, -1);
-  glVertex3f(-3, 1, 3);
+  glVertex3f(-3, 3, 3);
   glNormal3f(0, 0, -1);
-  glVertex3f(3, 1, 3);
+  glVertex3f(3, 3, 3);
   glNormal3f(0, 0, -1);
   glVertex3f(3, -1, 3);
   glEnd();
@@ -630,9 +630,9 @@ void myDisplay() {
   glNormal3f(0, 0, 1);
   glVertex3f(-3, -1, -3);
   glNormal3f(0, 0, 1);
-  glVertex3f(-3, 1, -3);
+  glVertex3f(-3, 3, -3);
   glNormal3f(0, 0, 1);
-  glVertex3f(3, 1, -3);
+  glVertex3f(3, 3, -3);
   glNormal3f(0, 0, 1);
   glVertex3f(3, -1, -3);
   glEnd();
@@ -735,10 +735,10 @@ int main(int argc, char *argv[]) {
   //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -13; x <13; x++) {
-    for (int y = -3; y <9; y++) {
-      for (int z = -13; z <13; z++) {
-        Particle* water = Particle::createWaterParticle(x * .1, y * .1 - 0.5 , z * .1);
+  for (int x = -15; x < 15; x++) {
+    for (int y = -3; y < 10; y++) {
+      for (int z = -15; z < 15; z++) {
+        Particle* water = Particle::createWaterParticle(x * .13, y * .1 - 0.5 , z * .13);
         particle_grid->addToGrid(water);
       }
     }
