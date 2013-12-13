@@ -407,8 +407,8 @@ void initScene(){
   glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.0);
   glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.0);
 
-  //glEnable(GL_BLEND);
-  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
   myReshape(viewport.w,viewport.h);
 }
@@ -445,7 +445,7 @@ void setColor(int color) {
     }
     case Water: {
       GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-      GLfloat diffuse_color[] = { 0.14510, 0.42745, 0.48235, 1.0 };
+      GLfloat diffuse_color[] = { 0.14510, 0.42745, 0.48235, 0.5 };
       GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
