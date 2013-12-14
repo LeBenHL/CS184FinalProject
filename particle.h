@@ -48,11 +48,11 @@ class Particle {
 		void leapfrog_step(float dt);
 		
 		
-		ThreeDVector* viscosityForce(vector<Particle*>* particles);
-		ThreeDVector* pressureForce(vector<Particle*>* particles);
-		ThreeDVector* boundaryForce(vector<Particle*>* particles);
+		void addViscosityForce(vector<Particle*>* particles, ThreeDVector* net_force);
+		void addPressureForce(vector<Particle*>* particles, ThreeDVector* net_force);
+		void addBoundaryForce(vector<Particle*>* particles, ThreeDVector* net_force);
 		float pressure();
-		ThreeDVector* externalForce();
+		void addExternalForce(ThreeDVector* net_force);
 		void addGravity(ThreeDVector* vector);
 		void addWind(ThreeDVector* vector);
 		void addBuoyancy(ThreeDVector* vector);

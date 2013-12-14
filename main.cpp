@@ -738,7 +738,7 @@ int main(int argc, char *argv[]) {
   for (int x = -15; x < 15; x++) {
     for (int y = -3; y < 10; y++) {
       for (int z = -15; z < 15; z++) {
-        Particle* water = Particle::createWaterParticle(x * .13, y * .1 - 0.5 , z * .13);
+        Particle* water = Particle::createWaterParticle(x * .13, y * .1 + 1 , z * .13);
         particle_grid->addToGrid(water);
       }
     }

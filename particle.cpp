@@ -99,20 +99,10 @@ void Particle::set_acceleration(vector<Particle*>* particles) {
 	if(this->type != Particle_Boundary){
 		ThreeDVector* net_force = new ThreeDVector();
 
-		ThreeDVector* external_force = this->externalForce();
-		ThreeDVector* pressure_force = this->pressureForce(particles);
-		ThreeDVector* viscosity_force = this->viscosityForce(particles);
-		ThreeDVector* boundary_force = this->boundaryForce(particles);
-
-		net_force->vector_add_bang(external_force);
-		net_force->vector_add_bang(pressure_force);
-		net_force->vector_add_bang(viscosity_force);
-		net_force->vector_add_bang(boundary_force);
-
-		delete external_force;
-		delete pressure_force;
-		delete viscosity_force;
-		delete boundary_force;
+		this->addExternalForce(net_force);
+		this->addPressureForce(particles, net_force);
+		this->addViscosityForce(particles, net_force);
+		this->addBoundaryForce(particles, net_force);
 
 		// Acceleration = Force / density
 		net_force->scalar_multiply_bang(1 / this->density);
@@ -164,9 +154,9 @@ void Particle::leapfrog_step(float dt) {
 	}
 }
 
-ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
+void Particle::addViscosityForce(vector<Particle*>* particles, ThreeDVector* net_force) {
 	extern float H;
-	ThreeDVector* running_sum = new ThreeDVector();
+	ThreeDVector running_sum = ThreeDVector();
 	if (this->type != Particle_Boundary){
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
@@ -176,19 +166,19 @@ ThreeDVector* Particle::viscosityForce(vector<Particle*>* particles) {
 				if (multiplier != 0) {
 					ThreeDVector velocity_difference = ThreeDVector(particle->velocity->x - this->velocity->x, particle->velocity->y - this->velocity->y, particle->velocity->z - this->velocity->z);
 					velocity_difference.scalar_multiply_bang(multiplier);
-					running_sum->vector_add_bang(&velocity_difference);
+					running_sum.vector_add_bang(&velocity_difference);
 				}
 			}
 		}
-		running_sum->scalar_multiply_bang(this->viscosity_coefficient);
+		running_sum.scalar_multiply_bang(this->viscosity_coefficient);
 	}
-	return running_sum;
+	net_force->vector_add_bang(&running_sum);
 }
 
-ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
+void Particle::addPressureForce(vector<Particle*>* particles, ThreeDVector* net_force) {
 	extern float H;
-	ThreeDVector* running_sum = new ThreeDVector();
-	if(this->type != Particle_Boundary){
+	ThreeDVector running_sum = ThreeDVector();
+	if (this->type != Particle_Boundary) {
 		float my_pressure = this->pressure();
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
@@ -199,13 +189,13 @@ ThreeDVector* Particle::pressureForce(vector<Particle*>* particles) {
 					float particle_pressure = particle->pressure();
 					float average_pressure = (particle_pressure + my_pressure) * 0.5 * (particle->mass / particle->density);
 					gradient.scalar_multiply_bang(average_pressure);
-					running_sum->vector_add_bang(&gradient);
+					running_sum.vector_add_bang(&gradient);
 				}
 			}
 		}
-		running_sum->scalar_multiply_bang(-1);
+		running_sum.scalar_multiply_bang(-1);
 	}
-	return running_sum;
+	net_force->vector_add_bang(&running_sum);
 }
 
 float parametric_calculation(float q){
@@ -220,10 +210,10 @@ float parametric_calculation(float q){
 	}
 }
 
-ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
+void Particle::addBoundaryForce(vector<Particle*>* particles, ThreeDVector* net_force) {
 	extern float H;
 	extern float WATER_GAS_CONSTANT; //change for fog later
-	ThreeDVector* running_sum = new ThreeDVector();
+	ThreeDVector running_sum = ThreeDVector();
 	if(this->type != Particle_Boundary){
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
@@ -244,7 +234,7 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 				float constant_factor = ((mass_k/(mass_a + mass_k)) * gamma * this->density) / mag_xa_minus_xk;
 
 				xa_minus_xk.scalar_multiply_bang(constant_factor);
-				running_sum->vector_add_bang(&xa_minus_xk);
+				running_sum.vector_add_bang(&xa_minus_xk);
 				//cout << c2 << endl;
 				//cout << (mass_k/(mass_a + mass_k)) << endl;
 				//cout << gamma << endl;
@@ -255,16 +245,16 @@ ThreeDVector* Particle::boundaryForce(vector<Particle*>* particles) {
 			}
 		}
 	}
-	return running_sum;
+	net_force->vector_add_bang(&running_sum);
 }
 
-ThreeDVector* Particle::externalForce() {
-	ThreeDVector* external_force = new ThreeDVector();
-	this->addGravity(external_force);
-	this->addWind(external_force);
-	this->addBuoyancy(external_force);
+void Particle::addExternalForce(ThreeDVector* net_force) {
+	ThreeDVector external_force = ThreeDVector();
+	this->addGravity(&external_force);
+	this->addWind(&external_force);
+	this->addBuoyancy(&external_force);
 
-	return external_force;
+	net_force->vector_add_bang(&external_force);
 }
 
 void Particle::addGravity(ThreeDVector* vector) {
