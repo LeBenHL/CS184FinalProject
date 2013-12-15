@@ -106,7 +106,7 @@ bool save = false;
 char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = false;
+bool spheres = true;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
@@ -128,6 +128,9 @@ ThreeDVector* max_bounds;
 ParticleGrid* particle_grid;
 
 float scale_factor = 1.0/1000000.0;
+
+GLuint fbo;
+GLuint render_buf;
 
 //Print Function for debugging
 void print(string _string) {
@@ -381,6 +384,15 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 void initScene(){
+  if (save) {
+    glGenFramebuffers(1, &fbo);
+    glGenRenderbuffers(1, &render_buf);
+    glBindRenderbuffer(GL_RENDERBUFFER, render_buf);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, viewport.w, viewport.h);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
+  }
+
   //glClearColor(0.52941f, 0.80784f, 0.98039f, 0.0f); // Clear to Sky Blue, fully transparent
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   // Enable lighting and the light we have set up
@@ -546,6 +558,10 @@ void myDisplay() {
 
   // Enable shading
   glShadeModel(GL_SMOOTH);
+
+  if (save) {
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+  }
   
   //BRIDGE
   setColor(Color_Golden_Gate_Orange);
@@ -676,13 +692,14 @@ void myDisplay() {
   if (save) {
     if (!changed && chdir(save_dir) != 0) {
       perror("chdir() to save_dir failed");
-      changed = true;
     }
+    changed = true;
     int w = glutGet(GLUT_WINDOW_WIDTH);
     int h = glutGet(GLUT_WINDOW_HEIGHT);
     vector<unsigned char> buf(w * h * 4);
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadBuffer(GL_COLOR_ATTACHMENT0);
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &buf[0] );
 
     int row_stride = w * 4;
@@ -697,7 +714,7 @@ void myDisplay() {
     }
 
     std::ostringstream os_str;
-    os_str << file_name << img_counter << ".png";
+    os_str << file_name << "-" << img_counter << ".png";
 
     cout << os_str.str().c_str() << endl;
 
@@ -748,22 +765,22 @@ int main(int argc, char *argv[]) {
   }
 
   //Parse Polygons the Golden Gate
-  //parseObj("Golden Gate Bridge.obj");
+  parseObj("Golden Gate Bridge.obj");
   setBounds();
   
   
-  /*for (int x = -15; x < 15; x++) {
-    for (int y = -4; y < -3; y++) {//-3,2
+  for (int x = -15; x < 15; x++) {
+    for (int y = -4; y < 4; y++) {//-3,2
       for (int z = -15; z < 15; z++) {//-15,15
         Particle* water = Particle::createWaterParticle(x * .13, y * .1 + 1 , z * .13);
         particle_grid->addToGrid(water);
       }
     }
-  }*/
+  }
 
-  for (int x = -15; x < 10; x++) {//-15,10
-    for (int y = -5; y < 2; y++) {//-3,2
-      for (int z = -15; z < 10; z++) {//-15,10
+  for (int x = -10; x < 10; x++) {//-15,10
+    for (int y = -5; y < 3; y++) {//-3,2
+      for (int z = -10; z < 10; z++) {//-15,10
         Particle* fog = Particle::createFogParticle(x * .15, y * .15, z * .10);//0.1,0.1,0.1
         particle_grid->addToGrid(fog);
       }
