@@ -53,6 +53,10 @@ float WATER_TEMP = 30.0;
 
 static int img_counter = 0;
 
+const char* save_dir;
+
+bool changed = false;
+
 //best values so far
 /*
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
@@ -668,6 +672,10 @@ void myDisplay() {
 
 
   if (save) {
+    if (!changed && chdir(save_dir) != 0) {
+      perror("chdir() to save_dir failed");
+    }
+    changed = true;
     int w = glutGet(GLUT_WINDOW_WIDTH);
     int h = glutGet(GLUT_WINDOW_HEIGHT);
     vector<unsigned char> buf(w * h * 4);
@@ -685,7 +693,6 @@ void myDisplay() {
     img_counter++;
     createPng(f_name, buf, w, h);
   }
-
   glFlush();
   glutSwapBuffers();          // swap buffers (we earlier set double buffer)
 }
@@ -720,6 +727,10 @@ int main(int argc, char *argv[]) {
         save = true;
         file_name = argv[i + 1];
         i = i + 1;
+	if (i + 1 < argc) {
+	  save_dir = argv[i + 1];
+	  i++;
+	}
       }
     } 
   }
