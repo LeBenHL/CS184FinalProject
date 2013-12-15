@@ -106,7 +106,7 @@ bool save = false;
 char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = true;
+bool spheres = false;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
