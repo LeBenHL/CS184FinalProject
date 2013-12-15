@@ -213,7 +213,7 @@ float parametric_calculation(float q){
 void Particle::addBoundaryForce(vector<Particle*>* particles, ThreeDVector* net_force) {
 	extern float H;
 	ThreeDVector running_sum = ThreeDVector();
-	if(this->type != Particle_Boundary){
+	if(this->type != Particle_Boundary && this->type != Particle_Fog){
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
 			if(particle->type == Particle_Boundary){
@@ -276,7 +276,7 @@ float Particle::pressure() {
 
 float ambientTemp(float height) {
 	extern float AMBIENT_TEMP_AT_GROUND_LEVEL;
-	return AMBIENT_TEMP_AT_GROUND_LEVEL + height * .5;
+	return AMBIENT_TEMP_AT_GROUND_LEVEL + height * .3;//0.6
 }
 
 void Particle::addBuoyancy(ThreeDVector* vector) {

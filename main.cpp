@@ -24,6 +24,8 @@
 
 #include <time.h>
 #include <math.h>
+#include <unistd.h>
+#include <sys/stat.h>.
 
 #include "three_d_vector.h"
 #include "lodepng.h"
@@ -40,7 +42,7 @@ float TIMESTEP_DURATION =  0.001;
 float PARTICLE_RADIUS = 0.04;
 //float H = 0.01;
 float H = .225;
-float MARCHING_CUBE_STEP_SIZE = .1;
+float MARCHING_CUBE_STEP_SIZE = 0.05;
 //float MARCHING_CUBE_STEP_SIZE = 2;
 float ISOVALUE_THRESHOLD = 0.5;
 
@@ -77,13 +79,13 @@ float WATER_REST_DENSITY = 700;
 float WATER_TEMP = 30.0;
 */
 
-float FOG_MASS = .5;
-float FOG_VICOSITY_COEFFICIENT = 1.0;
-float FOG_BUOYANCY_STRENGTH = 500;
-float FOG_GAS_CONSTANT = 500;
-float FOG_REST_DENSITY = 200;
-float FOG_TEMP = 25.1;
-float BOUNDARY_MASS = 20;
+float FOG_MASS = 1.3;//0.5
+float FOG_VICOSITY_COEFFICIENT = 1.1;//1
+float FOG_BUOYANCY_STRENGTH = 510;//500
+float FOG_GAS_CONSTANT = 500;//500
+float FOG_REST_DENSITY = 200;//200
+float FOG_TEMP = 25.1;//25.1
+float BOUNDARY_MASS = 20;//20
 
 //COLORS
 typedef enum {
@@ -469,7 +471,7 @@ void setColor(int color) {
     }
     case Fog: {
       GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, 0.5 };
+      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, 0.38};//transparency
       GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
@@ -674,14 +676,25 @@ void myDisplay() {
   if (save) {
     if (!changed && chdir(save_dir) != 0) {
       perror("chdir() to save_dir failed");
+      changed = true;
     }
-    changed = true;
     int w = glutGet(GLUT_WINDOW_WIDTH);
     int h = glutGet(GLUT_WINDOW_HEIGHT);
     vector<unsigned char> buf(w * h * 4);
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &buf[0] );
+
+    int row_stride = w * 4;
+
+    vector<unsigned char> new_buf(0);
+    for (int i = h -1 ; i >= 0; --i) {
+      int begin = i * row_stride;
+      int end = begin + row_stride;
+      for(int j = begin; j != end; ++j) {
+        new_buf.push_back(buf[j]);
+      }
+    }
 
     std::ostringstream os_str;
     os_str << file_name << img_counter << ".png";
@@ -691,7 +704,7 @@ void myDisplay() {
     const char* f_name = os_str.str().c_str();
 
     img_counter++;
-    createPng(f_name, buf, w, h);
+    createPng(f_name, new_buf, w, h);
   }
   glFlush();
   glutSwapBuffers();          // swap buffers (we earlier set double buffer)
@@ -726,32 +739,32 @@ int main(int argc, char *argv[]) {
       if(i + 1 < argc) {
         save = true;
         file_name = argv[i + 1];
+        save_dir = file_name;
+        umask(0);
+        mkdir(save_dir, 0777);
         i = i + 1;
-	if (i + 1 < argc) {
-	  save_dir = argv[i + 1];
-	  i++;
-	}
       }
     } 
   }
 
   //Parse Polygons the Golden Gate
-  parseObj("Golden Gate Bridge.obj");
+  //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -15; x < 15; x++) {
-    for (int y = -3; y < 2; y++) {
-      for (int z = -15; z < 15; z++) {
+  
+  /*for (int x = -15; x < 15; x++) {
+    for (int y = -4; y < -3; y++) {//-3,2
+      for (int z = -15; z < 15; z++) {//-15,15
         Particle* water = Particle::createWaterParticle(x * .13, y * .1 + 1 , z * .13);
         particle_grid->addToGrid(water);
       }
     }
-  }
+  }*/
 
-  for (int x = -15; x < 10; x++) {
-    for (int y = -3; y < 2; y++) {
-      for (int z = -15; z < 10; z++) {
-        Particle* fog = Particle::createFogParticle(x * .10, y * .1 , z * .10);
+  for (int x = -15; x < 10; x++) {//-15,10
+    for (int y = -5; y < 2; y++) {//-3,2
+      for (int z = -15; z < 10; z++) {//-15,10
+        Particle* fog = Particle::createFogParticle(x * .15, y * .15, z * .10);//0.1,0.1,0.1
         particle_grid->addToGrid(fog);
       }
     }
