@@ -274,10 +274,14 @@ float Particle::pressure() {
 	return pressure;
 }
 
+float ambientTemp(float height) {
+	extern float AMBIENT_TEMP_AT_GROUND_LEVEL;
+	return AMBIENT_TEMP_AT_GROUND_LEVEL + height * .5;
+}
+
 void Particle::addBuoyancy(ThreeDVector* vector) {
-	extern float AMBIENT_TEMP;
 	extern ThreeDVector* CONSTANT_OF_GRAVITY;
-	float multiplier = -this->buoyancy_strength * (this->temperature - AMBIENT_TEMP);
+	float multiplier = -this->buoyancy_strength * (this->temperature - ambientTemp(this->position->y)) * this->density;
 	ThreeDVector buoyancy = ThreeDVector(CONSTANT_OF_GRAVITY->x * multiplier, CONSTANT_OF_GRAVITY->y * multiplier, CONSTANT_OF_GRAVITY->z * multiplier);
 	vector->vector_add_bang(&buoyancy);
 }
