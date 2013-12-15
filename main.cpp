@@ -100,7 +100,7 @@ bool save = false;
 char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = falsem;
+bool spheres = false;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
@@ -821,7 +821,13 @@ int main(int argc, char *argv[]) {
     Particle* particle = particle_grid->water_particles->at(i);
     vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
     particle->set_density(neighbors);
-    //delete neighbors;
+  }
+
+  #pragma omp parallel for
+  for (int i = 0; i < particle_grid->fog_particles->size(); ++i) {
+    Particle* particle = particle_grid->fog_particles->at(i);
+    vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
+    particle->set_density(neighbors);
   }
 
   //This initializes glut
