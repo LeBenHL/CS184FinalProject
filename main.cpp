@@ -100,7 +100,7 @@ bool save = false;
 char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = false;
+bool spheres = true;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
@@ -121,7 +121,7 @@ ThreeDVector* max_bounds;
 //Grids containing Particles
 ParticleGrid* particle_grid;
 
-float scale_factor = 1.0/500000.0;
+float scale_factor = 1.0/1000000.0;
 
 //Print Function for debugging
 void print(string _string) {
@@ -540,12 +540,13 @@ void myDisplay() {
 
   // Enable shading
   glShadeModel(GL_SMOOTH);
-  /*
+  
   //BRIDGE
   setColor(Color_Golden_Gate_Orange);
   glPushMatrix();
   glScalef(scale_factor, scale_factor, scale_factor);
-  glTranslatef(-center_x, -center_y, -center_z);
+  glRotatef(-45, 0, 1, 0);
+  glTranslatef(-center_x, -center_y - 406136, -center_z + 700000);
   // Start drawing
   for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = polygons.begin(); it != polygons.end(); ++it) {
     vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;
@@ -560,32 +561,6 @@ void myDisplay() {
     glEnd();
   }
   glPopMatrix();
-
-  //BOUNDING SURFACES
-  setColor(Color_Ground_Brown);
-  glBegin(GL_POLYGON);  
-  glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -35.0, -10000);
-  glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -35.0, 10000);
-  glNormal3f(0, 1, 0);
-  glVertex3f(10000, -35.0, 10000);
-  glNormal3f(0, 1, 0);
-  glVertex3f(10000, -35.0, -10000);
-  glEnd();
-  //FLUIDS
-
-  setColor(Color_Ground_Brown);
-  glBegin(GL_POLYGON);  
-  glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -35.0, -10000);
-  glNormal3f(0, 1, 0);
-  glVertex3f(-10000, -35.0, 10000);
-  glNormal3f(0, 1, 0);
-  glVertex3f(10000, -35.0, 10000);
-  glNormal3f(0, 1, 0);
-  glVertex3f(10000, -35.0, -10000);
-  glEnd();  */
 
   setColor(Color_Ground_Brown); //bottom wall
   glBegin(GL_POLYGON);  
@@ -750,7 +725,7 @@ int main(int argc, char *argv[]) {
   }
 
   //Parse Polygons the Golden Gate
-  //parseObj("Golden Gate Bridge.obj");
+  parseObj("Golden Gate Bridge.obj");
   setBounds();
   
   
