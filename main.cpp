@@ -384,17 +384,9 @@ void myReshape(int w, int h) {
 // Simple init function
 //****************************************************
 void initScene(){
-  if (save) {
-    glGenFramebuffers(1, &fbo);
-    glGenRenderbuffers(1, &render_buf);
-    glBindRenderbuffer(GL_RENDERBUFFER, render_buf);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, viewport.w, viewport.h);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, render_buf);
-  }
 
   //glClearColor(0.52941f, 0.80784f, 0.98039f, 0.0f); // Clear to Sky Blue, fully transparent
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   // Enable lighting and the light we have set up
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
@@ -558,10 +550,6 @@ void myDisplay() {
 
   // Enable shading
   glShadeModel(GL_SMOOTH);
-
-  if (save) {
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-  }
   
   //BRIDGE
   setColor(Color_Golden_Gate_Orange);
@@ -699,7 +687,6 @@ void myDisplay() {
     vector<unsigned char> buf(w * h * 4);
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glReadBuffer(GL_COLOR_ATTACHMENT0);
     glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, &buf[0] );
 
     int row_stride = w * 4;
@@ -768,7 +755,6 @@ int main(int argc, char *argv[]) {
   parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  
   for (int x = -15; x < 15; x++) {
     for (int y = -4; y < 4; y++) {//-3,2
       for (int z = -15; z < 15; z++) {//-15,15
@@ -781,7 +767,7 @@ int main(int argc, char *argv[]) {
   for (int x = -10; x < 10; x++) {//-15,10
     for (int y = -5; y < 3; y++) {//-3,2
       for (int z = -10; z < 10; z++) {//-15,10
-        Particle* fog = Particle::createFogParticle(x * .15, y * .15, z * .10);//0.1,0.1,0.1
+        Particle* fog = Particle::createFogParticle(x * .15, y * .15 - 1, z * .10);//0.1,0.1,0.1
         particle_grid->addToGrid(fog);
       }
     }
