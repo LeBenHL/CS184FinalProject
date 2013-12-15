@@ -17,11 +17,12 @@ class MarchingCube {
 
 		MarchingCube(ThreeDVector* min_corner, float size);
 		~MarchingCube();
-		vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangulate(ParticleGrid* particle_grid, float isovalue_threshold);
-		pair<ThreeDVector*, ThreeDVector*> interpolatePoint(int p1_index, int p2_index, float color_p1, float color_p2, float isovalue_threshold, ParticleGrid* particle_grid);
+		vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangulate(ParticleGrid* particle_grid, Particle_Type t, float isovalue_threshold);
+		pair<ThreeDVector*, ThreeDVector*> interpolatePoint(int p1_index, int p2_index, float color_p1, float color_p2, 
+			float isovalue_threshold, ParticleGrid* particle_grid, Particle_Type t);
 		ThreeDVector* pointAt(int corner_index);
 
-		static vector<MarchingCube*>* generateGrid(vector<Particle*>* particles, float step_size);
+		static vector<MarchingCube*>* generateGrid(ParticleGrid* particle_grid, Particle_Type t, float step_size);
 		//static vector<MarchingCube*>* generateGridFast(ParticleGrid* particle_grid, float step_size);
 
 		static const int edgeTable[256];

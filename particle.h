@@ -30,7 +30,8 @@ class Particle {
 
 		 Particle_Type type;
 
-		static map<ThreeDVector*, float, comparator>* color_map;
+		static map<ThreeDVector*, float, comparator>* water_color_map;
+		static map<ThreeDVector*, float, comparator>* fog_color_map;
 
 		//Interpolated Fields
 		float density;
@@ -62,8 +63,8 @@ class Particle {
 		float color(vector<Particle*>* particles);
 		//float colorGradient(vector<Particle*>* particles);
 
-		static float colorAt(ThreeDVector* position, vector<Particle*>* particles);
-		static float colorAt(float x, float y, float z, vector<Particle*>* particles);
+		static float colorAt(ThreeDVector* position, vector<Particle*>* particles, Particle_Type t);
+		static float colorAt(float x, float y, float z, vector<Particle*>* particles, Particle_Type t);
 
 		static Particle* createWaterParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
 		static Particle* createFogParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());

@@ -212,7 +212,6 @@ float parametric_calculation(float q){
 
 void Particle::addBoundaryForce(vector<Particle*>* particles, ThreeDVector* net_force) {
 	extern float H;
-	extern float WATER_GAS_CONSTANT; //change for fog later
 	ThreeDVector running_sum = ThreeDVector();
 	if(this->type != Particle_Boundary){
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
@@ -292,7 +291,7 @@ bool Particle::isSurfaceParticle(vector<Particle*>* particles) {
 }*/
 
 float Particle::color(vector<Particle*>* particles) {
-	return Particle::colorAt(this->position, particles);
+	return Particle::colorAt(this->position, particles, this->type);
 }
 
 /*
@@ -311,23 +310,31 @@ float Particle::colorGradient(vector<Particle*>* particles) {
 	return magnitude;
 }*/
 
-float Particle::colorAt(float x, float y, float z, vector<Particle*>* particles) {
+float Particle::colorAt(float x, float y, float z, vector<Particle*>* particles, Particle_Type t) {
 	ThreeDVector position = ThreeDVector(x, y, z);
-	float color = Particle::colorAt(&position, particles);
+	float color = Particle::colorAt(&position, particles, t);
 	return color;
 }
 
-float Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles) {
+float Particle::colorAt(ThreeDVector* position, vector<Particle*>* particles, Particle_Type t) {
 	extern float H;
-	map<ThreeDVector*, float>::const_iterator got = Particle::color_map->find(position);
-	if ( got == Particle::color_map->end() ) {
+	map<ThreeDVector*, float, comparator>* color_map;
+	if (t == Particle_Water) {
+		color_map = Particle::water_color_map;
+	} else {
+		color_map = Particle::fog_color_map;
+	}
+	map<ThreeDVector*, float>::const_iterator got = color_map->find(position);
+	if ( got == color_map->end() ) {
 		float running_sum = 0;
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
-			running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
+			if (particle->type == t) {
+				running_sum += particle->mass / particle->density * Particle::poly6Kernel(position->distance(particle->position), H);
+			}
 		}
 		#pragma omp critical(colorMapInsert) 
-		Particle::color_map->insert(pair<ThreeDVector*, float>(position->clone(), running_sum));
+		color_map->insert(pair<ThreeDVector*, float>(position->clone(), running_sum));
 		return running_sum;
 	} else {
 		return got->second;
@@ -399,13 +406,19 @@ bool Particle::spikyGradientKernel(ThreeDVector* r, ThreeDVector* r_particle, fl
 }
 
 void Particle::clearColorMap() {
-	for(map<ThreeDVector*, float, comparator>::iterator it = Particle::color_map->begin(); it != Particle::color_map->end(); it++) {
+	for(map<ThreeDVector*, float, comparator>::iterator it = Particle::water_color_map->begin(); it != Particle::water_color_map->end(); it++) {
 	    delete it->first;
 	}
-	Particle::color_map->clear();
+	for(map<ThreeDVector*, float, comparator>::iterator it = Particle::fog_color_map->begin(); it != Particle::fog_color_map->end(); it++) {
+	    delete it->first;
+	}
+	Particle::water_color_map->clear();
+	Particle::fog_color_map->clear();
 }
 
-map<ThreeDVector*, float, comparator>* Particle::color_map = new map<ThreeDVector*, float, comparator>;
+map<ThreeDVector*, float, comparator>* Particle::water_color_map = new map<ThreeDVector*, float, comparator>;
+map<ThreeDVector*, float, comparator>* Particle::fog_color_map = new map<ThreeDVector*, float, comparator>;
+
 
 
 

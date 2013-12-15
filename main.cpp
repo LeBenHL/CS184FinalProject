@@ -50,7 +50,6 @@ float WATER_BUOYANCY_STRENGTH = 0.01;
 float WATER_GAS_CONSTANT = 500;
 float WATER_REST_DENSITY = 650;
 float WATER_TEMP = 30.0;
-float FOG_MASS = 1.0;
 
 static int img_counter = 0;
 
@@ -74,11 +73,12 @@ float WATER_REST_DENSITY = 700;
 float WATER_TEMP = 30.0;
 */
 
+float FOG_MASS = 1.0;
 float FOG_VICOSITY_COEFFICIENT = 1.0;
-float FOG_BUOYANCY_STRENGTH = 1.0;
-float FOG_GAS_CONSTANT = 1.0;
-float FOG_REST_DENSITY = 1.0;
-float FOG_TEMP = 1.0;
+float FOG_BUOYANCY_STRENGTH = 500;
+float FOG_GAS_CONSTANT = 500;
+float FOG_REST_DENSITY = 700;
+float FOG_TEMP = 30.0;
 float BOUNDARY_MASS = 20;
 
 //COLORS
@@ -100,7 +100,7 @@ bool save = false;
 char* file_name;
 
 //Types of Surface Reconstruction
-bool spheres = true;
+bool spheres = falsem;
 bool marching_cubes = true;
 
 //How Many Timesteps we have advanced so far
@@ -301,20 +301,25 @@ void advanceOneTimestep() {
   #pragma omp parallel for
   for (int i = 0; i < particle_grid->fog_particles->size(); ++i) {
     Particle* particle = particle_grid->fog_particles->at(i);
-    particle->set_density(particle_grid->fog_particles);
+    vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
+    particle->set_density(neighbors);
   }
 
   //Calculate accelerations next
   #pragma omp parallel for
   for (int i = 0; i < particle_grid->fog_particles->size(); ++i) {
     Particle* particle = particle_grid->fog_particles->at(i);
-    particle->set_acceleration(particle_grid->fog_particles);
+    vector<Particle*>* neighbors = particle_grid->getNeighbors(particle);
+    particle->set_acceleration(neighbors);
   }
 
   //Then perform leapfrog!
-  for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); ++it) {
-    Particle* particle = *it;
-    
+  vector<Particle*> fog_copy(*(particle_grid->fog_particles));
+  #pragma omp parallel for
+  for (int i = 0; i < fog_copy.size(); ++i) {
+    Particle* particle = fog_copy.at(i);
+
+    particle_grid->unregisterGridPos(particle);
     //First Timestep
     if (num_timesteps == 0) {
       particle->leapfrog_start(TIMESTEP_DURATION);
@@ -322,6 +327,7 @@ void advanceOneTimestep() {
     } else {
       particle->leapfrog_step(TIMESTEP_DURATION);
     }
+    particle_grid->registerGridPos(particle);
   }
 
   //Also clear color map since that info is not valid anymore!
@@ -459,7 +465,7 @@ void setColor(int color) {
     }
     case Fog: {
       GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, 1.0 };
+      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, 0.5 };
       GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
@@ -474,9 +480,9 @@ void setColor(int color) {
   }
 }
 
-void marchingCubes(vector<Particle*>* particles) {
+void marchingCubes(Particle_Type t) {
   int counter = 0;
-  vector<MarchingCube*>* cubes = MarchingCube::generateGrid(particles, MARCHING_CUBE_STEP_SIZE);
+  vector<MarchingCube*>* cubes = MarchingCube::generateGrid(particle_grid, t, MARCHING_CUBE_STEP_SIZE);
   //vector<MarchingCube*>* cubes = MarchingCube::generateGridFast(particle_grid, MARCHING_CUBE_STEP_SIZE);
   vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles = new vector<vector<pair<ThreeDVector*, ThreeDVector*> > >;
 
@@ -486,7 +492,7 @@ void marchingCubes(vector<Particle*>* particles) {
     //char* buffer = new char[1000];
     //sprintf(buffer, "%d/%d", ++counter, cubes->size());
     //print(buffer);
-    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles_subset = cube->triangulate(particle_grid, ISOVALUE_THRESHOLD);
+    vector<vector<pair<ThreeDVector*, ThreeDVector*> > >* triangles_subset = cube->triangulate(particle_grid, t, ISOVALUE_THRESHOLD);
     #pragma omp critical
     triangles->insert(triangles->end(), triangles_subset->begin(), triangles_subset->end());
     delete triangles_subset;
@@ -637,6 +643,18 @@ void myDisplay() {
   glVertex3f(3, -1, -3);
   glEnd();
 
+  setColor(Color_Ground_Brown); //Top wall
+  glBegin(GL_POLYGON);  
+  glNormal3f(0, 1, 0);
+  glVertex3f(-3, 3, -3);
+  glNormal3f(0, 1, 0);
+  glVertex3f(-3, 3, 3);
+  glNormal3f(0, 1, 0);
+  glVertex3f(3, 3, 3);
+  glNormal3f(0, 1, 0);
+  glVertex3f(3, 3, -3);
+  glEnd();
+
   if (spheres) {
     setColor(Water);
     for (vector<Particle*>::iterator it = particle_grid->water_particles->begin(); it != particle_grid->water_particles->end(); it++) {
@@ -666,10 +684,10 @@ void myDisplay() {
     }*/
   } else if (marching_cubes) {
     setColor(Water);
-    marchingCubes(particle_grid->water_particles);
+    marchingCubes(Particle_Water);
 
     setColor(Fog);
-    marchingCubes(particle_grid->fog_particles);
+    marchingCubes(Particle_Fog);
   }
 
 
@@ -735,11 +753,21 @@ int main(int argc, char *argv[]) {
   //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
+  
   for (int x = -15; x < 15; x++) {
-    for (int y = -3; y < 10; y++) {
+    for (int y = -3; y < 2; y++) {
       for (int z = -15; z < 15; z++) {
         Particle* water = Particle::createWaterParticle(x * .13, y * .1 + 1 , z * .13);
         particle_grid->addToGrid(water);
+      }
+    }
+  }
+
+  for (int x = -15; x < 15; x++) {
+    for (int y = -3; y < 2; y++) {
+      for (int z = -15; z < 15; z++) {
+        Particle* fog = Particle::createFogParticle(x * .13, y * .1 , z * .13);
+        particle_grid->addToGrid(fog);
       }
     }
   }
@@ -778,6 +806,13 @@ int main(int argc, char *argv[]) {
       Particle* boundary = Particle::createBoundaryParticle(3, y * 0.05, z * 0.05);
       particle_grid->addToGrid(boundary);
     }      
+  }
+
+  for (int x = -60; x < 60; x++) {
+    for (int z = -60; z < 60; z++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .05, 3, z * .05);
+      particle_grid->addToGrid(boundary);
+    }
   }
 
   //Calculate densities for particles
