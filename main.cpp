@@ -37,8 +37,8 @@
 float PI = atan(1)*4;
 float E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
-float AMBIENT_TEMP_AT_GROUND_LEVEL = 25;
-float TIMESTEP_DURATION =  0.01;
+float AMBIENT_TEMP_AT_GROUND_LEVEL = 27;
+float TIMESTEP_DURATION =  0.001;
 float PARTICLE_RADIUS = 0.04;
 //float H = 0.01;
 float H = .225;
@@ -48,7 +48,7 @@ float ISOVALUE_THRESHOLD = 0.5;
 
 float WATER_MASS = 1.0;
 float WATER_VICOSITY_COEFFICIENT = 3.5;
-float WATER_BUOYANCY_STRENGTH = 0.01;
+float WATER_BUOYANCY_STRENGTH = 0.001;
 float WATER_GAS_CONSTANT = 500;
 float WATER_REST_DENSITY = 650;
 float WATER_TEMP = 25.0;
@@ -84,7 +84,7 @@ float FOG_VICOSITY_COEFFICIENT = 2;//1
 float FOG_BUOYANCY_STRENGTH = 100;//500
 float FOG_GAS_CONSTANT = 200;//500
 float FOG_REST_DENSITY = 150;//200
-float FOG_TEMP = 25.1;//25.1
+float FOG_TEMP = 27.002;//25.1
 float BOUNDARY_MASS = 20;//20
 
 //COLORS
@@ -461,7 +461,7 @@ void setColor(int color) {
     }
     case Water: {
       GLfloat ambient_color[] = { 0.0, 0.2, 0.2, 1.0 };
-      GLfloat diffuse_color[] = { 70.0/255.0, 130.0/255.0, 180.0/255.0, 1.0 };
+      GLfloat diffuse_color[] = { 70.0/255.0, 138.0/255.0, 180.0/255.0, 0.4 };
       GLfloat specular_color[] = { 0.1, 0.1, 0.1, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
@@ -582,7 +582,7 @@ void myDisplay() {
   glVertex3f(3, -1, 3);
   glNormal3f(0, 1, 0);
   glVertex3f(3, -1, -3);
-  glEnd();*/
+  glEnd();
 
   glBegin(GL_LINE_LOOP); //left wall 
   glNormal3f(1, 0, 0);
@@ -627,7 +627,7 @@ void myDisplay() {
   glNormal3f(0, 0, 1);
   glVertex3f(3, -1, -3);
   glEnd();
-  /*
+
   setColor(Color_Ground_Brown); //Top wall
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
@@ -754,15 +754,14 @@ int main(int argc, char *argv[]) {
   parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -18; x < 18; x++) {
-    for (int y = -4; y < -1; y++) {//-3,2
-      for (int z = -18; z < 18; z++) {//-15,15
+  for (int x = -13; x < 13; x++) {
+    for (int y = -6; y < 1; y++) {//-3,2
+      for (int z = -13; z < 13; z++) {//-15,15
         Particle* water = Particle::createWaterParticle(x * .13, y * .1 - 0.1 , z * .13);
         particle_grid->addToGrid(water);
       }
     }
   }
-
   for (int x = -15; x < 15; x++) {//-15,10
     for (int y = 5; y < 8; y++) {//-3,2
       for (int z = -15; z < 15; z++) {//-15,10
