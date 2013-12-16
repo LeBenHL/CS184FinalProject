@@ -38,7 +38,7 @@ float PI = atan(1)*4;
 float E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
 float AMBIENT_TEMP_AT_GROUND_LEVEL = 25;
-float TIMESTEP_DURATION =  0.001;
+float TIMESTEP_DURATION =  0.01;
 float PARTICLE_RADIUS = 0.04;
 //float H = 0.01;
 float H = .225;
@@ -51,7 +51,7 @@ float WATER_VICOSITY_COEFFICIENT = 3.5;
 float WATER_BUOYANCY_STRENGTH = 0.01;
 float WATER_GAS_CONSTANT = 500;
 float WATER_REST_DENSITY = 650;
-float WATER_TEMP = 30.0;
+float WATER_TEMP = 25.0;
 
 static int img_counter = 0;
 
@@ -79,11 +79,11 @@ float WATER_REST_DENSITY = 700;
 float WATER_TEMP = 30.0;
 */
 
-float FOG_MASS = 1.3;//0.5
-float FOG_VICOSITY_COEFFICIENT = 1.1;//1
-float FOG_BUOYANCY_STRENGTH = 510;//500
-float FOG_GAS_CONSTANT = 500;//500
-float FOG_REST_DENSITY = 200;//200
+float FOG_MASS = 0.12;//0.5
+float FOG_VICOSITY_COEFFICIENT = 2;//1
+float FOG_BUOYANCY_STRENGTH = 100;//500
+float FOG_GAS_CONSTANT = 200;//500
+float FOG_REST_DENSITY = 150;//200
 float FOG_TEMP = 25.1;//25.1
 float BOUNDARY_MASS = 20;//20
 
@@ -386,7 +386,7 @@ void myReshape(int w, int h) {
 void initScene(){
 
   //glClearColor(0.52941f, 0.80784f, 0.98039f, 0.0f); // Clear to Sky Blue, fully transparent
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClearColor(0.704f, 0.784f, 0.888f, 1.0f);
   // Enable lighting and the light we have set up
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
@@ -460,9 +460,9 @@ void setColor(int color) {
       break;
     }
     case Water: {
-      GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-      GLfloat diffuse_color[] = { 0.14510, 0.42745, 0.48235, 0.5 };
-      GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
+      GLfloat ambient_color[] = { 0.0, 0.2, 0.2, 1.0 };
+      GLfloat diffuse_color[] = { 70.0/255.0, 130.0/255.0, 180.0/255.0, 1.0 };
+      GLfloat specular_color[] = { 0.1, 0.1, 0.1, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
 
@@ -475,7 +475,7 @@ void setColor(int color) {
     }
     case Fog: {
       GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, 0.38};//transparency
+      GLfloat diffuse_color[] = { 176.0/255.0, 196.0/255.0, 222.0/255.0, 0.2};//transparency
       GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
@@ -544,7 +544,7 @@ void myDisplay() {
   //print((min_y - center_y) * scale_factor);
 
   //gluLookAt(-5, 0, 2.5, -4, 0, 0, 0, 1, 0);
-  gluLookAt(-4, 3, 4, 0, 0, -1, 0, 1, 0);
+  gluLookAt(0, 0.2, 4, -0.3, -0.3, -1, 0, 1, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -556,7 +556,7 @@ void myDisplay() {
   glPushMatrix();
   glScalef(scale_factor, scale_factor, scale_factor);
   glRotatef(-45, 0, 1, 0);
-  glTranslatef(-center_x, -center_y - 406136, -center_z + 700000);
+  glTranslatef(-center_x, -center_y - 106136, -center_z + 700000);
   // Start drawing
   for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = polygons.begin(); it != polygons.end(); ++it) {
     vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;
@@ -572,7 +572,7 @@ void myDisplay() {
   }
   glPopMatrix();
 
-  setColor(Color_Ground_Brown); //bottom wall
+  /*setColor(Color_Ground_Brown); //bottom wall
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
   glVertex3f(-3, -1, -3);
@@ -582,7 +582,7 @@ void myDisplay() {
   glVertex3f(3, -1, 3);
   glNormal3f(0, 1, 0);
   glVertex3f(3, -1, -3);
-  glEnd();
+  glEnd();*/
 
   glBegin(GL_LINE_LOOP); //left wall 
   glNormal3f(1, 0, 0);
@@ -627,7 +627,7 @@ void myDisplay() {
   glNormal3f(0, 0, 1);
   glVertex3f(3, -1, -3);
   glEnd();
-
+  /*
   setColor(Color_Ground_Brown); //Top wall
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
@@ -638,7 +638,7 @@ void myDisplay() {
   glVertex3f(3, 3, 3);
   glNormal3f(0, 1, 0);
   glVertex3f(3, 3, -3);
-  glEnd();
+  glEnd();*/
 
   if (spheres) {
     setColor(Water);
@@ -649,7 +649,6 @@ void myDisplay() {
       glutSolidSphere(PARTICLE_RADIUS, 20, 20);
       glPopMatrix();
     }
-
     setColor(Fog);
     for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); it++) {
       Particle* particle = *it;
@@ -755,19 +754,20 @@ int main(int argc, char *argv[]) {
   parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -15; x < 15; x++) {
-    for (int y = -4; y < 4; y++) {//-3,2
-      for (int z = -15; z < 15; z++) {//-15,15
-        Particle* water = Particle::createWaterParticle(x * .13, y * .1 + 1 , z * .13);
+  for (int x = -18; x < 18; x++) {
+    for (int y = -4; y < -1; y++) {//-3,2
+      for (int z = -18; z < 18; z++) {//-15,15
+        Particle* water = Particle::createWaterParticle(x * .13, y * .1 - 0.1 , z * .13);
         particle_grid->addToGrid(water);
       }
     }
   }
 
-  for (int x = -10; x < 10; x++) {//-15,10
-    for (int y = -5; y < 3; y++) {//-3,2
-      for (int z = -10; z < 10; z++) {//-15,10
-        Particle* fog = Particle::createFogParticle(x * .15, y * .15 - 1, z * .10);//0.1,0.1,0.1
+  for (int x = -15; x < 15; x++) {//-15,10
+    for (int y = 5; y < 8; y++) {//-3,2
+      for (int z = -15; z < 15; z++) {//-15,10
+        float jitter = (rand() % 100)/1000.0;
+        Particle* fog = Particle::createFogParticle(x * .15 + jitter, y * .15 - 1 + jitter, z * .10 + jitter);//0.1,0.1,0.1
         particle_grid->addToGrid(fog);
       }
     }
