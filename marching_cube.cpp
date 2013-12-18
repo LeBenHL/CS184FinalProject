@@ -1,6 +1,7 @@
 #include "marching_cube.h"
 #include <iostream>
 #include <limits>
+#include <algorithm>
 
 MarchingCube::MarchingCube(ThreeDVector* min_corner, float size) {
   this->min_corner = min_corner;
@@ -246,7 +247,7 @@ vector<MarchingCube*>* MarchingCube::generateGrid(ParticleGrid* particle_grid, P
       }
     }
   }
-
+  random_shuffle ( cubes->begin(), cubes->end() );
   return cubes;
 }
 

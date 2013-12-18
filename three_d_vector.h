@@ -23,6 +23,7 @@ class ThreeDVector{
 		float distance(float x, float y, float z);
 		ThreeDVector* midpoint(ThreeDVector*);
 		ThreeDVector* clone();
+		void subtract_normal_component_bang(ThreeDVector* normal);
 		char* repr();
 		char* print();
 		bool operator==(const ThreeDVector &other) const;

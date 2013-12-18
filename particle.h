@@ -28,6 +28,9 @@ class Particle {
 		float rest_density;
 		float temperature;
 
+		//For Boundary Particles
+		ThreeDVector* normal;
+
 		 Particle_Type type;
 
 		static map<ThreeDVector*, float, comparator>* water_color_map;
@@ -39,7 +42,7 @@ class Particle {
 
 		Particle(float x, float y, float z, float mass, 
 			ThreeDVector* velocity, float viscosity_coefficient, float buoyancy_strength, 
-			float gas_constant, float rest_density, float temperature, Particle_Type t);
+			float gas_constant, float rest_density, float temperature, Particle_Type t, ThreeDVector* normal = new ThreeDVector());
 		~Particle();
 		void set_density(vector<Particle*>* particles);
 		void set_acceleration(vector<Particle*>* particles);
@@ -58,6 +61,9 @@ class Particle {
 		void addWind(ThreeDVector* vector);
 		void addBuoyancy(ThreeDVector* vector);
 
+		//Alternative to Computing a Boundary Force
+		void applyBoundaryConditions(vector<Particle*>* particles, ThreeDVector* net_force);
+
 		//bool isSurfaceParticle(vector<Particle*>* particles);
 
 		float color(vector<Particle*>* particles);
@@ -68,7 +74,7 @@ class Particle {
 
 		static Particle* createWaterParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
 		static Particle* createFogParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
-		static Particle* createBoundaryParticle(float x, float y, float z, ThreeDVector* velocity=new ThreeDVector());
+		static Particle* createBoundaryParticle(float x, float y, float z, ThreeDVector* normal, ThreeDVector* velocity=new ThreeDVector());
 
 
 		//Poly 6 Kernel from http://www.matthiasmueller.info/publications/sca03.pdf

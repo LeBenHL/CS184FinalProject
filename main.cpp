@@ -79,12 +79,12 @@ float WATER_REST_DENSITY = 700;
 float WATER_TEMP = 30.0;
 */
 
-float FOG_MASS = 1.3;//0.5
-float FOG_VICOSITY_COEFFICIENT = 1.1;//1
-float FOG_BUOYANCY_STRENGTH = 510;//500
+float FOG_MASS = 0.5;//0.5
+float FOG_VICOSITY_COEFFICIENT = 1;//1
+float FOG_BUOYANCY_STRENGTH = 500;//500
 float FOG_GAS_CONSTANT = 500;//500
 float FOG_REST_DENSITY = 200;//200
-float FOG_TEMP = 25.1;//25.1
+float FOG_TEMP = 25.0001;//25.1
 float BOUNDARY_MASS = 20;//20
 
 //COLORS
@@ -386,7 +386,7 @@ void myReshape(int w, int h) {
 void initScene(){
 
   //glClearColor(0.52941f, 0.80784f, 0.98039f, 0.0f); // Clear to Sky Blue, fully transparent
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClearColor(0.704f, 0.784f, 0.888f, 1.0f);
   // Enable lighting and the light we have set up
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
@@ -461,7 +461,7 @@ void setColor(int color) {
     }
     case Water: {
       GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-      GLfloat diffuse_color[] = { 0.14510, 0.42745, 0.48235, 0.5 };
+      GLfloat diffuse_color[] = { 0.14510, 0.42745, 0.48235, 0.95 };
       GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
@@ -475,8 +475,8 @@ void setColor(int color) {
     }
     case Fog: {
       GLfloat ambient_color[] = { 0.0, 0.0, 0.0, 1.0 };
-      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, 0.38};//transparency
-      GLfloat specular_color[] = { 0.3, 0.3, 0.3, 1.0 };
+      GLfloat diffuse_color[] = { 204.0/255.0, 207.0/255.0, 188.0/255.0, .38};//transparency
+      GLfloat specular_color[] = { 0, 0, 0, 1.0 };
       GLfloat shininess[] = { 50.0 };
       GLfloat emission[] = {0, 0, 0, 1};
 
@@ -544,7 +544,7 @@ void myDisplay() {
   //print((min_y - center_y) * scale_factor);
 
   //gluLookAt(-5, 0, 2.5, -4, 0, 0, 0, 1, 0);
-  gluLookAt(-4, 3, 4, 0, 0, -1, 0, 1, 0);
+  gluLookAt(0, 0, 4, 0, 0, -1, 0, 1, 0);
 
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -572,7 +572,7 @@ void myDisplay() {
   }
   glPopMatrix();
 
-  setColor(Color_Ground_Brown); //bottom wall
+  /*setColor(Color_Ground_Brown); //bottom wall
   glBegin(GL_POLYGON);  
   glNormal3f(0, 1, 0);
   glVertex3f(-3, -1, -3);
@@ -638,7 +638,7 @@ void myDisplay() {
   glVertex3f(3, 3, 3);
   glNormal3f(0, 1, 0);
   glVertex3f(3, 3, -3);
-  glEnd();
+  glEnd();*/
 
   if (spheres) {
     setColor(Water);
@@ -755,63 +755,64 @@ int main(int argc, char *argv[]) {
   parseObj("Golden Gate Bridge.obj");
   setBounds();
   
-  for (int x = -15; x < 15; x++) {
-    for (int y = -4; y < 4; y++) {//-3,2
-      for (int z = -15; z < 15; z++) {//-15,15
-        Particle* water = Particle::createWaterParticle(x * .13, y * .1 + 1 , z * .13);
+  for (int x = -13; x < 13; x++) {
+    for (int y = -19; y < -13; y++) {//-3,2
+      for (int z = -13; z < 13; z++) {//-15,15
+        Particle* water = Particle::createWaterParticle(x * .13, y * .1 + 1, z * .13);
         particle_grid->addToGrid(water);
-      }
+      } 
     }
   }
-
-  for (int x = -10; x < 10; x++) {//-15,10
-    for (int y = -5; y < 3; y++) {//-3,2
-      for (int z = -10; z < 10; z++) {//-15,10
-        Particle* fog = Particle::createFogParticle(x * .15, y * .15 - 1, z * .10);//0.1,0.1,0.1
+  
+  for (int x = -9; x < 9; x++) {//-15,10
+    for (int y = 6; y < 9; y++) {//-3,2
+      for (int z = -9; z < 9; z++) {//-15,10
+        float jitter = (rand() % 100) / 500.0;
+        Particle* fog = Particle::createFogParticle(x * .15 + jitter, y * .15 - 1 + jitter, z * .10 + jitter);//0.1,0.1,0.1
         particle_grid->addToGrid(fog);
       }
     }
   }
 
-  for (int x = -60; x < 60; x++) {
-    for (int z = -60; z < 60; z++) {
-      Particle* boundary = Particle::createBoundaryParticle(x * .05, -1, z * .05);
+  for (int x = -30; x < 30; x++) {
+    for (int z = -30; z < 30; z++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .1, -1, z * .1, new ThreeDVector(0, 1, 0));
       particle_grid->addToGrid(boundary);
     }
   }
 
-  for (int y = -60; y < 60; y++) {
-    for (int x = -60; x < 60; x++) {
-      Particle* boundary = Particle::createBoundaryParticle(x * .05, y * 0.05, -3);
+  for (int y = -20; y < 40; y++) {
+    for (int x = -30; x < 30; x++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .1, y * 0.1, -3, new ThreeDVector(0, 0, 1));
       particle_grid->addToGrid(boundary);
     }      
   }
 
-  for (int y = -60; y < 60; y++) {
-    for (int x = -60; x < 60; x++) {      
-      Particle* boundary = Particle::createBoundaryParticle(x * 0.05, y * 0.05, 3);
+  for (int y = -20; y < 40; y++) {
+    for (int x = -30; x < 30; x++) {      
+      Particle* boundary = Particle::createBoundaryParticle(x * 0.1, y * 0.1, 3, new ThreeDVector(0, 0, -1));
       particle_grid->addToGrid(boundary);
     }
   }
 
-  for (int z = -60; z < 60; z++) {
-    for (int y = -60; y < 60; y++) {
-      Particle* boundary = Particle::createBoundaryParticle(-3,  y * 0.05, z * 0.05);
+  for (int z = -30; z < 30; z++) {
+    for (int y = -20; y < 40; y++) {
+      Particle* boundary = Particle::createBoundaryParticle(-3,  y * 0.1, z * 0.1, new ThreeDVector(1, 0, 0));
       particle_grid->addToGrid(boundary);
 
     }
   }
 
-  for (int z = -60; z < 60; z++) {
-    for (int y = -60; y < 60; y++) {
-      Particle* boundary = Particle::createBoundaryParticle(3, y * 0.05, z * 0.05);
+  for (int z = -30; z < 30; z++) {
+    for (int y = -20; y < 40; y++) {
+      Particle* boundary = Particle::createBoundaryParticle(3, y * 0.1, z * 0.1, new ThreeDVector(-1, 0, 0));
       particle_grid->addToGrid(boundary);
     }      
   }
 
-  for (int x = -60; x < 60; x++) {
-    for (int z = -60; z < 60; z++) {
-      Particle* boundary = Particle::createBoundaryParticle(x * .05, 3, z * .05);
+  for (int x = -30; x < 30; x++) {
+    for (int z = -30; z < 30; z++) {
+      Particle* boundary = Particle::createBoundaryParticle(x * .1, 3, z * .1, new ThreeDVector(0, -1, 0));
       particle_grid->addToGrid(boundary);
     }
   }

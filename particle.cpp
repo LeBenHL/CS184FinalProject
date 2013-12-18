@@ -55,7 +55,7 @@ namespace std {
 
 Particle::Particle(float x, float y, float z, float mass, 
 		ThreeDVector* velocity, float viscosity_coefficient, float buoyancy_strength, 
-		float gas_constant, float rest_density, float temperature, Particle_Type t) {
+		float gas_constant, float rest_density, float temperature, Particle_Type t, ThreeDVector* normal) {
 	this->position = new ThreeDVector(x, y, z);
 	this->mass = mass;
 	this->velocity = velocity;
@@ -66,6 +66,7 @@ Particle::Particle(float x, float y, float z, float mass,
 	this->temperature = temperature;
 	this->acceleration = new ThreeDVector(0, 0, 0);
 	this->type = t;
+	this->normal = normal;
 }
 
 Particle::~Particle() {
@@ -73,6 +74,7 @@ Particle::~Particle() {
 	delete this->velocity;
 	delete this->velocity_half;
 	delete this->acceleration;
+	delete this->normal;
 }
 
 void Particle::set_density(vector<Particle*>* particles) {
@@ -102,7 +104,7 @@ void Particle::set_acceleration(vector<Particle*>* particles) {
 		this->addExternalForce(net_force);
 		this->addPressureForce(particles, net_force);
 		this->addViscosityForce(particles, net_force);
-		this->addBoundaryForce(particles, net_force);
+		this->applyBoundaryConditions(particles, net_force);
 
 		// Acceleration = Force / density
 		net_force->scalar_multiply_bang(1 / this->density);
@@ -247,6 +249,23 @@ void Particle::addBoundaryForce(vector<Particle*>* particles, ThreeDVector* net_
 	net_force->vector_add_bang(&running_sum);
 }
 
+void Particle::applyBoundaryConditions(vector<Particle*>* particles, ThreeDVector* net_force) {
+	float threshold = 0.1;
+	if(this->type != Particle_Boundary){
+		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
+			Particle* particle = *it;
+			if(particle->type == Particle_Boundary && this->position->distance(particle->position) < threshold) {
+				net_force->subtract_normal_component_bang(particle->normal);
+				float multiplier = 100 * this->density;
+				ThreeDVector boundary_force = ThreeDVector(particle->normal->x * multiplier, particle->normal->y * multiplier, particle->normal->z * multiplier);
+				net_force->vector_add_bang(&boundary_force);
+				this->velocity->subtract_normal_component_bang(particle->normal);
+				this->velocity_half->subtract_normal_component_bang(particle->normal);
+			}
+		}
+	}
+}
+
 void Particle::addExternalForce(ThreeDVector* net_force) {
 	ThreeDVector external_force = ThreeDVector();
 	this->addGravity(&external_force);
@@ -365,9 +384,9 @@ Particle* Particle::createFogParticle(float x, float y, float z, ThreeDVector* v
 	return new Particle(x, y, z, FOG_MASS, velocity, FOG_VICOSITY_COEFFICIENT, FOG_BUOYANCY_STRENGTH, FOG_GAS_CONSTANT, FOG_REST_DENSITY, FOG_TEMP, Particle_Fog);
 }
 
-Particle* Particle::createBoundaryParticle(float x, float y, float z, ThreeDVector* velocity) {
+Particle* Particle::createBoundaryParticle(float x, float y, float z, ThreeDVector* normal, ThreeDVector* velocity) {
 	extern float BOUNDARY_MASS;
-	return new Particle(x, y, z, BOUNDARY_MASS, velocity, 0, 0, 0, 0, 0, Particle_Boundary);
+	return new Particle(x, y, z, BOUNDARY_MASS, velocity, 0, 0, 0, 0, 0, Particle_Boundary, normal);
 }
 
 float Particle::poly6Kernel(float r, float h) {

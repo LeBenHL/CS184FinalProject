@@ -94,6 +94,13 @@ ThreeDVector* ThreeDVector::clone(){
 	return new ThreeDVector(this->x, this->y, this->z);
 }
 
+void ThreeDVector::subtract_normal_component_bang(ThreeDVector* normal) {
+	double dp = this->dot_product(normal);
+	this->x -= normal->x * dp;
+	this->y -= normal->y * dp;
+	this->z -= normal->z * dp;
+}
+
 char* ThreeDVector::repr() {
 	char* buffer = new char[1000];
 	sprintf(buffer, "<ThreeDVector, x = %0.2f, y = %0.2f, z = %0.2f>", this->x, this->y, this->z);
