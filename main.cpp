@@ -751,7 +751,7 @@ int main(int argc, char *argv[]) {
   }
 
   //Parse Polygons the Golden Gate
-  parseObj("Golden Gate Bridge.obj");
+  //parseObj("Golden Gate Bridge.obj");
   setBounds();
   
   for (int x = -13; x < 13; x++) {
