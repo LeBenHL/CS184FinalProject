@@ -215,7 +215,7 @@ float parametric_calculation(float q){
 void Particle::addBoundaryForce(vector<Particle*>* particles, ThreeDVector* net_force) {
 	extern float H;
 	ThreeDVector running_sum = ThreeDVector();
-	if(this->type != Particle_Boundary && this->type != Particle_Fog){
+	if(this->type != Particle_Boundary){
 		for (vector<Particle*>::iterator it = particles->begin(); it != particles->end(); ++it) {
 			Particle* particle = *it;
 			if(particle->type == Particle_Boundary){

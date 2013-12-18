@@ -37,7 +37,7 @@
 float PI = atan(1)*4;
 float E = 2.7182818284590452353;
 ThreeDVector* CONSTANT_OF_GRAVITY = new ThreeDVector(0, -9.8, 0);
-float AMBIENT_TEMP_AT_GROUND_LEVEL = 25;
+float AMBIENT_TEMP_AT_GROUND_LEVEL = 27;
 float TIMESTEP_DURATION =  0.001;
 float PARTICLE_RADIUS = 0.04;
 //float H = 0.01;
@@ -48,10 +48,10 @@ float ISOVALUE_THRESHOLD = 0.5;
 
 float WATER_MASS = 1.0;
 float WATER_VICOSITY_COEFFICIENT = 3.5;
-float WATER_BUOYANCY_STRENGTH = 0.01;
+float WATER_BUOYANCY_STRENGTH = 0.001;
 float WATER_GAS_CONSTANT = 500;
 float WATER_REST_DENSITY = 650;
-float WATER_TEMP = 30.0;
+float WATER_TEMP = 25.0;
 
 static int img_counter = 0;
 
@@ -556,7 +556,7 @@ void myDisplay() {
   glPushMatrix();
   glScalef(scale_factor, scale_factor, scale_factor);
   glRotatef(-45, 0, 1, 0);
-  glTranslatef(-center_x, -center_y - 406136, -center_z + 700000);
+  glTranslatef(-center_x, -center_y - 106136, -center_z + 700000);
   // Start drawing
   for(vector<vector<pair<ThreeDVector*, ThreeDVector*> > >::iterator it = polygons.begin(); it != polygons.end(); ++it) {
     vector<pair<ThreeDVector*, ThreeDVector*> > polygon = *it;
@@ -649,7 +649,6 @@ void myDisplay() {
       glutSolidSphere(PARTICLE_RADIUS, 20, 20);
       glPopMatrix();
     }
-
     setColor(Fog);
     for (vector<Particle*>::iterator it = particle_grid->fog_particles->begin(); it != particle_grid->fog_particles->end(); it++) {
       Particle* particle = *it;
