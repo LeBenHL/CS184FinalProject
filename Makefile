@@ -1,5 +1,5 @@
 OBJS = main.o three_d_vector.o lodepng.o particle.o marching_cube.o particle_grid.o
-CC = g++-4.9
+CC = g++-
 INCLUDE = -I ./ -g -pg
 FLAGS = -O3 -std=c++0x -w 
 
